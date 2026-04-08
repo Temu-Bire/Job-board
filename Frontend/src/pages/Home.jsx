@@ -57,8 +57,8 @@ const Home = () => {
             <h1 className="text-5xl md:text-6xl font-bold mb-6">
               Connect Your Future with CareerConnect
             </h1>
-            <p className="text-xl md:text-2xl mb-8 text-blue-100">
-              The premier platform connecting students with internships and career opportunities
+              <p className="text-xl md:text-2xl mb-8 text-blue-100">
+              The premier platform connecting jobseekers with internships and career opportunities
             </p>
             <div className="flex gap-4 justify-center">
               <Link
@@ -108,7 +108,7 @@ const Home = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="text-4xl font-bold text-gray-800 mb-6">For Students</h2>
+              <h2 className="text-4xl font-bold text-gray-800 mb-6">For Jobseekers</h2>
               <p className="text-xl text-gray-600 mb-6">
                 Find internships and entry-level positions that match your skills and career goals
               </p>
@@ -136,14 +136,14 @@ const Home = () => {
                 to="/register"
                 className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors inline-block"
               >
-                Join as Student
+                Join as Jobseeker
               </Link>
             </div>
 
             <div>
               <h2 className="text-4xl font-bold text-gray-800 mb-6">For Recruiters</h2>
               <p className="text-xl text-gray-600 mb-6">
-                Connect with talented students and find your next great hire
+                Connect with talented jobseekers and find your next great hire
               </p>
               <ul className="space-y-4 mb-8">
                 <li className="flex items-start gap-3">
@@ -155,7 +155,7 @@ const Home = () => {
                 <li className="flex items-start gap-3">
                   <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0 mt-1" />
                   <span className="text-gray-700">
-                    Review applications and student profiles efficiently
+                    Review applications and jobseeker profiles efficiently
                   </span>
                 </li>
                 <li className="flex items-start gap-3">
@@ -181,7 +181,7 @@ const Home = () => {
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-800 mb-4">What Our Users Say</h2>
             <p className="text-xl text-gray-600">
-              Join thousands of satisfied students and recruiters
+              Join thousands of satisfied jobseekers and recruiters
             </p>
           </div>
 
@@ -225,11 +225,11 @@ const Home = () => {
                 <span className="text-xl font-bold">CareerConnect</span>
               </div>
               <p className="text-gray-400">
-                Connecting students with career opportunities since 2024
+                Connecting jobseekers with career opportunities since 2024
               </p>
             </div>
             <div>
-              <h4 className="font-bold mb-4">For Students</h4>
+              <h4 className="font-bold mb-4">For Jobseekers</h4>
               <ul className="space-y-2 text-gray-400">
                 <li>
                   <Link to="/register" className="hover:text-white">

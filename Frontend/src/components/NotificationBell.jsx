@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Bell } from 'lucide-react';
+import { io } from 'socket.io-client';
 import { notificationAPI } from '../utils/api';
 
 const NotificationBell = () => {
@@ -7,6 +8,7 @@ const NotificationBell = () => {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
+  const socketRef = useRef(null);
 
   const refreshCount = async () => {
     try {
@@ -25,9 +27,41 @@ const NotificationBell = () => {
   };
 
   useEffect(() => {
+    // Initial unread count load
     refreshCount();
-    const id = setInterval(refreshCount, 30000);
-    return () => clearInterval(id);
+
+    const token = localStorage.getItem('token');
+    if (!token) return undefined;
+
+    const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://127.0.0.1:5000';
+    const socket = io(SOCKET_URL, {
+      auth: { token },
+    });
+    socketRef.current = socket;
+
+    const handleIncoming = (payload) => {
+      setUnread((prev) => prev + 1);
+      setItems((prev) => [
+        {
+          id: payload.id,
+          message: payload.message,
+          createdAt: payload.createdAt,
+          read: false,
+        },
+        ...prev,
+      ]);
+    };
+
+    socket.on('new_job_posted', handleIncoming);
+    socket.on('new_application', handleIncoming);
+    socket.on('application_status_updated', handleIncoming);
+
+    return () => {
+      socket.off('new_job_posted', handleIncoming);
+      socket.off('new_application', handleIncoming);
+      socket.off('application_status_updated', handleIncoming);
+      socket.disconnect();
+    };
   }, []);
 
   const toggleOpen = async () => {

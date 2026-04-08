@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { jobAPI, applicationAPI } from '../../utils/api';
+import { jobAPI, applicationAPI, userAPI } from '../../utils/api';
 import Sidebar from '../../components/Sidebar';
 import JobCard from '../../components/JobCard';
 import Modal from '../../components/Modal';
@@ -11,14 +11,18 @@ import { Search, MapPin, Briefcase, Filter } from 'lucide-react';
 const JobSearch = () => {
   const { user } = useAuth();
   const [jobs, setJobs] = useState([]);
-  const [filteredJobs, setFilteredJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     search: '',
     location: '',
-    category: '',
     type: '',
+    salaryMin: '',
+    salaryMax: '',
   });
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [savedJobIds, setSavedJobIds] = useState([]);
   const [selectedJob, setSelectedJob] = useState(null);
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [coverLetter, setCoverLetter] = useState('');
@@ -26,18 +30,59 @@ const JobSearch = () => {
   const [toast, setToast] = useState(null);
 
   useEffect(() => {
-    fetchJobs();
+    // Load saved jobs once so the Save/Unsaved button state is correct.
+    const loadSavedJobs = async () => {
+      try {
+        const savedJobs = await userAPI.getSavedJobs();
+        setSavedJobIds((savedJobs || []).map((j) => j._id));
+      } catch (e) {
+        // If it fails, still allow browsing/applying.
+        setSavedJobIds([]);
+      }
+    };
+    loadSavedJobs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    applyFilters();
-  }, [filters, jobs]);
+    fetchJobs(page);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, filters.search, filters.location, filters.type, filters.salaryMin, filters.salaryMax]);
 
-  const fetchJobs = async () => {
+  const handleToggleSave = async (job) => {
+    const jobId = job?._id;
+    if (!jobId) return;
+
     try {
-      const data = await jobAPI.getAllJobs();
-      setJobs(data);
-      setFilteredJobs(data);
+      if (savedJobIds.includes(jobId)) {
+        await jobAPI.unsaveJob(jobId);
+        setSavedJobIds((prev) => prev.filter((id) => id !== jobId));
+      } else {
+        await jobAPI.saveJob(jobId);
+        setSavedJobIds((prev) => [...prev, jobId]);
+      }
+    } catch (error) {
+      const msg = error?.message || error?.data?.message || 'Failed to update saved job';
+      setToast({ message: msg, type: 'error' });
+    }
+  };
+
+  const fetchJobs = async (pageToLoad = 1) => {
+    try {
+      setLoading(true);
+      const response = await jobAPI.getAllJobs({
+        page: pageToLoad,
+        limit: 9,
+        search: filters.search,
+        location: filters.location,
+        type: filters.type,
+        salaryMin: filters.salaryMin,
+        salaryMax: filters.salaryMax,
+      });
+      setJobs(response.jobs || []);
+      setPage(response.page || pageToLoad);
+      setPages(response.pages || 1);
+      setTotal(response.total || (response.jobs || []).length);
     } catch (error) {
       console.error('Error fetching jobs:', error);
       setToast({ message: 'Failed to load jobs', type: 'error' });
@@ -46,36 +91,10 @@ const JobSearch = () => {
     }
   };
 
-  const applyFilters = () => {
-    let result = [...jobs];
-
-    if (filters.search) {
-      result = result.filter(
-        (job) =>
-          job.title.toLowerCase().includes(filters.search.toLowerCase()) ||
-          job.company.toLowerCase().includes(filters.search.toLowerCase())
-      );
-    }
-
-    if (filters.location) {
-      result = result.filter((job) =>
-        job.location.toLowerCase().includes(filters.location.toLowerCase())
-      );
-    }
-
-    if (filters.category) {
-      result = result.filter((job) => job.category === filters.category);
-    }
-
-    if (filters.type) {
-      result = result.filter((job) => job.type === filters.type);
-    }
-
-    setFilteredJobs(result);
-  };
-
   const handleFilterChange = (e) => {
-    setFilters({ ...filters, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFilters((prev) => ({ ...prev, [name]: value }));
+    setPage(1);
   };
 
   const handleApply = (job) => {
@@ -131,7 +150,9 @@ const JobSearch = () => {
         <div className="max-w-7xl mx-auto">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">Find Your Dream Job</h1>
-            <p className="text-gray-600 dark:text-gray-300">Browse through {jobs.length} available opportunities</p>
+            <p className="text-gray-600 dark:text-gray-300">
+              Browse through {total || jobs.length} available opportunities
+            </p>
           </div>
 
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-8 border border-gray-200 dark:border-gray-700">
@@ -176,43 +197,79 @@ const JobSearch = () => {
                     <option value="">All Types</option>
                     <option value="Internship">Internship</option>
                     <option value="Full-time">Full-time</option>
+                    <option value="Part-time">Part-time</option>
+                    <option value="Contract">Contract</option>
                   </select>
                 </div>
               </div>
 
-              <div className="md:col-span-4">
-                <div className="relative">
-                  <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <select
-                    name="category"
-                    value={filters.category}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Salary Range (Min / Max)
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    name="salaryMin"
+                    value={filters.salaryMin}
                     onChange={handleFilterChange}
-                    className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
-                  >
-                    <option value="">All Categories</option>
-                    <option value="Software Development">Software Development</option>
-                    <option value="Data Science">Data Science</option>
-                    <option value="Design">Design</option>
-                    <option value="Mobile Development">Mobile Development</option>
-                  </select>
+                    placeholder="Min"
+                    className="w-1/2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
+                  />
+                  <input
+                    type="number"
+                    name="salaryMax"
+                    value={filters.salaryMax}
+                    onChange={handleFilterChange}
+                    placeholder="Max"
+                    className="w-1/2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
+                  />
                 </div>
               </div>
             </div>
           </div>
 
           <div className="mb-4 text-gray-600 dark:text-gray-300">
-            Showing {filteredJobs.length} job{filteredJobs.length !== 1 ? 's' : ''}
+            Showing page {page} of {pages} ({total} job{total !== 1 ? 's' : ''})
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredJobs.map((job) => (
-              <JobCard key={job._id} job={job} onApply={handleApply} />
+            {jobs.map((job) => (
+              <JobCard
+                key={job._id}
+                job={job}
+                onApply={handleApply}
+                onToggleSave={handleToggleSave}
+                isSaved={savedJobIds.includes(job._id)}
+              />
             ))}
           </div>
 
-          {filteredJobs.length === 0 && (
+          {jobs.length === 0 && (
             <div className="text-center py-12">
               <p className="text-gray-600 dark:text-gray-400 text-lg">No jobs found matching your criteria</p>
+            </div>
+          )}
+
+          {pages > 1 && (
+            <div className="flex justify-center items-center gap-4 mt-8">
+              <button
+                onClick={() => setPage((p) => Math.max(p - 1, 1))}
+                disabled={page === 1}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 dark:text-gray-300 disabled:opacity-50"
+              >
+                Previous
+              </button>
+              <span className="text-gray-700 dark:text-gray-300 text-sm">
+                Page {page} of {pages}
+              </span>
+              <button
+                onClick={() => setPage((p) => Math.min(p + 1, pages))}
+                disabled={page === pages}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 dark:text-gray-300 disabled:opacity-50"
+              >
+                Next
+              </button>
             </div>
           )}
         </div>

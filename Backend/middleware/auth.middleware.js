@@ -21,7 +21,9 @@ export const protect = async (req, res, next) => {
         res.status(401);
         return next(new Error('Not authorized'));
       }
-      if (req.user.blocked) {
+      // Allow admins to access the system even if blocked (recovery).
+      // Non-admin blocked users are forbidden.
+      if (req.user.blocked && req.user.role !== 'admin') {
         res.status(403);
         return next(new Error('User is blocked'));
       }

@@ -39,7 +39,7 @@ const Profile = () => {
     try {
       const [updatedUser, updatedProfile] = await Promise.all([
         userAPI.updateProfile(user._id, { name: formData.name, email: formData.email }),
-        userAPI.updateStudentProfile(user._id, {
+        userAPI.updateJobseekerProfile(user._id, {
           university: formData.university,
           degree: formData.degree,
           graduationYear: Number(formData.graduationYear),
@@ -160,7 +160,7 @@ const Profile = () => {
                   { label: 'Phone Number', name: 'phone', type: 'tel', icon: <Phone className="w-4 h-4 inline mr-2" /> },
                   { label: 'University', name: 'university', type: 'text', icon: <GraduationCap className="w-4 h-4 inline mr-2" /> },
                   { label: 'Degree', name: 'degree', type: 'text', icon: <FileText className="w-4 h-4 inline mr-2" /> },
-                  { label: 'Graduation Year', name: 'graduationYear', type: 'number', icon: <Calendar className="w-4 h-4 inline mr-2" />, min: 2024, max: 2035 },
+                  { label: 'Graduation Year', name: 'graduationYear', type: 'number', icon: <Calendar className="w-4 h-4 inline mr-2" />, min: 2024, max: 2027 },
                 ].map(({ label, name, type, icon, min, max }) => (
                   <div key={name}>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">

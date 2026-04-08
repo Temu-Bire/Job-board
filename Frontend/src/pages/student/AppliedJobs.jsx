@@ -17,7 +17,7 @@ const AppliedJobs = () => {
 
   const fetchApplications = async () => {
     try {
-      const data = await applicationAPI.getStudentApplications(user._id); // <-- fix here
+      const data = await applicationAPI.getJobseekerApplications(user._id);
       setApplications(data);
     } catch (error) {
       console.error('Error fetching applications:', error);
@@ -124,7 +124,7 @@ const AppliedJobs = () => {
                     <div className="border-t pt-4 mt-4">
                       <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
                         <span>Location: {application.job.location}</span>
-                        <span>Salary: {application.job.salary}</span>
+                        <span>Salary: {application.job.salaryMin} - {application.job.salaryMax}</span>
                       </div>
                     </div>
                   </div>

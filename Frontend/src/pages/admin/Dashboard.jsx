@@ -44,8 +44,8 @@ const Dashboard = () => {
                   <Users className="w-6 h-6 text-blue-600" />
                 </div>
               </div>
-              <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-1">{stats.totalStudents}</h3>
-              <p className="text-gray-600 dark:text-gray-400 text-sm">Total Students</p>
+              <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-1">{stats.totalJobseekers}</h3>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">Total Jobseekers</p>
             </div>
 
             <div className="bg-white dark:bg-gray-700 rounded-xl shadow-md p-6 border-l-4 border-teal-600">
@@ -109,24 +109,30 @@ const Dashboard = () => {
               <div className="space-y-4">
                 <div className="flex justify-between items-center p-4 bg-blue-50 dark:bg-blue-600 rounded-lg">
                   <div>
-                    <p className="font-semibold text-gray-800 dark:text-gray-200">Student Registrations</p>
+                    <p className="font-semibold text-gray-800 dark:text-gray-200">Jobseeker Registrations</p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Last 30 days</p>
                   </div>
-                  <span className="text-2xl font-bold text-blue-600 dark:text-blue-300">+42</span>
+                  <span className="text-2xl font-bold text-blue-600 dark:text-blue-300">
+                    +{stats.jobseekerRegistrationsLast30 ?? 0}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center p-4 bg-green-50 dark:bg-green-600 rounded-lg">
                   <div>
                     <p className="font-semibold text-gray-800 dark:text-gray-200">New Job Postings</p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Last 30 days</p>
                   </div>
-                  <span className="text-2xl font-bold text-green-600 dark:text-green-300">+28</span>
+                  <span className="text-2xl font-bold text-green-600 dark:text-green-300">
+                    +{stats.newJobsLast30 ?? 0}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center p-4 bg-teal-50 dark:bg-teal-600 rounded-lg">
                   <div>
                     <p className="font-semibold text-gray-800 dark:text-gray-200">Applications Submitted</p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Last 30 days</p>
                   </div>
-                  <span className="text-2xl font-bold text-teal-600 dark:text-teal-300">+156</span>
+                  <span className="text-2xl font-bold text-teal-600 dark:text-teal-300">
+                    +{stats.applicationsLast30 ?? 0}
+                  </span>
                 </div>
               </div>
             </div>

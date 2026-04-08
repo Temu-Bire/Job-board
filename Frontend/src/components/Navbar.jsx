@@ -19,8 +19,8 @@ const Navbar = () => {
   const getDashboardLink = () => {
     if (!user) return '/';
     switch (user.role) {
-      case 'student':
-        return '/student/dashboard';
+      case 'jobseeker':
+        return '/jobseeker/dashboard';
       case 'recruiter':
         return '/recruiter/dashboard';
       case 'admin':
@@ -30,7 +30,7 @@ const Navbar = () => {
     }
   };
 
-  const avatarSrc = user?.role === 'student' ? user?.profile?.avatarUrl : user?.role === 'recruiter' ? user?.profile?.logoUrl : '';
+  const avatarSrc = user?.role === 'jobseeker' ? user?.profile?.avatarUrl : user?.role === 'recruiter' ? user?.profile?.logoUrl : '';
   const safeAvatarSrc = avatarSrc && avatarSrc.startsWith('/uploads') ? `${avatarSrc}` : avatarSrc; // supports vite proxy for /uploads
 
 return (
@@ -68,22 +68,22 @@ return (
             </>
           ) : (
             <>
-              {user.role === 'student' && (
+              {user.role === 'jobseeker' && (
                 <>
                   <Link
-                    to="/student/dashboard"
+                    to="/jobseeker/dashboard"
                     className="text-gray-700 dark:text-gray-300 hover:text-blue-600 font-medium"
                   >
                     Dashboard
                   </Link>
                   <Link
-                    to="/student/jobs"
+                    to="/jobseeker/jobs"
                     className="text-gray-700 dark:text-gray-300 hover:text-blue-600 font-medium"
                   >
                     Find Jobs
                   </Link>
                   <Link
-                    to="/student/applied"
+                    to="/jobseeker/applied"
                     className="text-gray-700 dark:text-gray-300 hover:text-blue-600 font-medium"
                   >
                     Applications
@@ -141,7 +141,7 @@ return (
                 </button>
                 <NotificationBell />
                 <Link
-                  to={user.role === 'student' ? '/student/profile' : '#'}
+                  to={user.role === 'jobseeker' ? '/jobseeker/profile' : '#'}
                   className="flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-blue-600"
                 >
                   <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
@@ -221,31 +221,31 @@ return (
                 <p className="text-sm text-gray-500 dark:text-gray-400">Signed in as</p>
                 <p className="font-semibold text-gray-800 dark:text-gray-200">{user.name}</p>
               </div>
-              {user.role === 'student' && (
+              {user.role === 'jobseeker' && (
                 <>
                   <Link
-                    to="/student/dashboard"
+                    to="/jobseeker/dashboard"
                     className="block text-gray-700 dark:text-gray-300 hover:text-blue-600 font-medium py-2"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Dashboard
                   </Link>
                   <Link
-                    to="/student/jobs"
+                    to="/jobseeker/jobs"
                     className="block text-gray-700 dark:text-gray-300 hover:text-blue-600 font-medium py-2"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Find Jobs
                   </Link>
                   <Link
-                    to="/student/applied"
+                    to="/jobseeker/applied"
                     className="block text-gray-700 dark:text-gray-300 hover:text-blue-600 font-medium py-2"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Applications
                   </Link>
                   <Link
-                    to="/student/profile"
+                    to="/jobseeker/profile"
                     className="block text-gray-700 dark:text-gray-300 hover:text-blue-600 font-medium py-2"
                     onClick={() => setMobileMenuOpen(false)}
                   >

@@ -38,7 +38,7 @@ export const registerUser = async (req, res) => {
       name,
       email,
       password,
-      role: role || 'student',
+      role: role || 'jobseeker',
       approved: role === 'recruiter' ? false : true,
       blocked: false,
       university: university || '',
@@ -51,7 +51,7 @@ export const registerUser = async (req, res) => {
         university: university || '',
         degree: degree || '',
         graduationYear: graduationYear ? Number(graduationYear) : null,
-      }
+      },
     });
 
     if (user) {

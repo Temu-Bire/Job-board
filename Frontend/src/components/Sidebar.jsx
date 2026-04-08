@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Briefcase, FileText, User, Users, PlusCircle } from 'lucide-react';
+import { LayoutDashboard, Briefcase, FileText, User, Users, PlusCircle, Bookmark } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Sidebar = () => {
@@ -8,11 +8,12 @@ const Sidebar = () => {
 
   const isActive = (path) => location.pathname === path;
 
-  const studentLinks = [
-    { path: '/student/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { path: '/student/jobs', label: 'Find Jobs', icon: Briefcase },
-    { path: '/student/applied', label: 'Applications', icon: FileText },
-    { path: '/student/profile', label: 'Profile', icon: User },
+  const jobseekerLinks = [
+    { path: '/jobseeker/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { path: '/jobseeker/jobs', label: 'Find Jobs', icon: Briefcase },
+    { path: '/jobseeker/applied', label: 'Applications', icon: FileText },
+    { path: '/jobseeker/saved', label: 'Saved Jobs', icon: Bookmark },
+    { path: '/jobseeker/profile', label: 'Profile', icon: User },
   ];
 
   const recruiterLinks = [
@@ -28,8 +29,8 @@ const Sidebar = () => {
 
   const getLinks = () => {
     switch (user?.role) {
-      case 'student':
-        return studentLinks;
+      case 'jobseeker':
+        return jobseekerLinks;
       case 'recruiter':
         return recruiterLinks;
       case 'admin':

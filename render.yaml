@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: careerconnect-backend
+    env: node
+    plan: free
+    rootDir: Backend
+    buildCommand: npm install
+    startCommand: npm start
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      # Set these in Render dashboard for security:
+      # - MONGODB_URI
+      # - JWT_SECRET
+      # - CORS_ORIGINS (your Vercel domain)
+

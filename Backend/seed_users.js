@@ -24,10 +24,10 @@ const seedUsers = async () => {
         role: 'admin',
       },
       {
-        name: 'Student User',
-        email: 'student@careerconnect.com',
+        name: 'Jobseeker User',
+        email: 'jobseeker@careerconnect.com',
         password: 'student123',
-        role: 'student',
+        role: 'jobseeker',
       },
       {
         name: 'Recruiter User',

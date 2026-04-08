@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const API_BASE_URL = '/api';
+// In dev, Vite proxy serves /api → backend.
+// In production, set VITE_API_BASE_URL to your backend URL + /api (e.g. https://my-backend.onrender.com/api)
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -53,11 +55,22 @@ export const authAPI = {
 export const jobAPI = {
   getAllJobs: (filters = {}) => {
     const params = new URLSearchParams();
+
+    if (filters.page) params.append('page', String(filters.page));
+    if (filters.limit) params.append('limit', String(filters.limit));
+
     if (filters.search) params.append('search', filters.search);
     if (filters.location) params.append('location', filters.location);
-    if (filters.category) params.append('category', filters.category);
     if (filters.type) params.append('type', filters.type);
-    return api.get(`/jobs?${params.toString()}`);
+    if (filters.salaryMin != null && filters.salaryMin !== '') {
+      params.append('salaryMin', String(filters.salaryMin));
+    }
+    if (filters.salaryMax != null && filters.salaryMax !== '') {
+      params.append('salaryMax', String(filters.salaryMax));
+    }
+
+    const qs = params.toString();
+    return api.get(`/jobs${qs ? `?${qs}` : ''}`);
   },
 
   getJobById: (id) => api.get(`/jobs/${id}`),
@@ -69,13 +82,17 @@ export const jobAPI = {
   deleteJob: (id) => api.delete(`/jobs/${id}`),
 
   getRecruiterJobs: () => api.get('/jobs/recruiter/my-jobs'),
+
+  saveJob: (id) => api.post(`/jobs/${id}/save`),
+
+  unsaveJob: (id) => api.delete(`/jobs/${id}/save`),
 };
 export const applicationAPI = {
   applyForJob: (jobId, applicationData) =>
     api.post(`/applications/job/${jobId}`, applicationData),
 
-  getStudentApplications: () =>
-    api.get('/applications/student/my-applications'),
+  getJobseekerApplications: () =>
+    api.get('/applications/jobseeker/my-applications'),
 
   getJobApplicants: (jobId) =>
     api.get(`/applications/job/${jobId}/applicants`),
@@ -94,15 +111,15 @@ export const userAPI = {
     return response;
   },
 
-  updateStudentProfile: async (userId, profileData) => {
-    const response = await api.put(`/users/${userId}/student-profile`, profileData);
+  updateJobseekerProfile: async (userId, profileData) => {
+    const response = await api.put(`/users/${userId}/jobseeker-profile`, profileData);
     return response;
   },
 
   uploadAvatar: async (userId, file) => {
     const formData = new FormData();
     formData.append('avatar', file);
-    const response = await api.post(`/users/${userId}/student-profile/avatar`, formData, {
+    const response = await api.post(`/users/${userId}/jobseeker-profile/avatar`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     return response;
@@ -111,7 +128,7 @@ export const userAPI = {
   uploadResume: async (userId, file) => {
     const formData = new FormData();
     formData.append('resume', file);
-    const response = await api.post(`/users/${userId}/student-profile/resume`, formData, {
+    const response = await api.post(`/users/${userId}/jobseeker-profile/resume`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     return response;
@@ -131,6 +148,11 @@ export const userAPI = {
     const response = await api.put(`/users/${userId}/block`);
     return response;
   },
+
+  getSavedJobs: async () => {
+    const response = await api.get('/users/saved-jobs');
+    return response;
+  },
 };
 
 
@@ -145,8 +167,8 @@ export const statsAPI = {
     return response;
   },
 
-  getStudentStats: async () => {
-    const response = await api.get('/stats/student');
+  getJobseekerStats: async () => {
+    const response = await api.get('/stats/jobseeker');
     return response;
   },
 };
@@ -156,6 +178,18 @@ export const notificationAPI = {
   unreadCount: () => api.get('/notifications/unread-count'),
   markRead: (id) => api.put(`/notifications/${id}/read`),
   markAllRead: () => api.put('/notifications/mark-all-read'),
+};
+
+export const messageAPI = {
+  getConversation: async (userId) => {
+    const response = await api.get(`/messages/${userId}`);
+    return response;
+  },
+
+  sendMessage: async (userId, message) => {
+    const response = await api.post(`/messages/${userId}`, { message });
+    return response;
+  },
 };
 
 export default api;

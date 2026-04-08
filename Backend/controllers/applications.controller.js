@@ -1,11 +1,12 @@
 import Application from '../models/Application.js';
 import Job from '../models/Job.js';
 import Notification from '../models/Notification.js';
+import { getIO } from '../socket.js';
 
 const normalizeApplication = (app) => {
   if (!app) return app;
   const obj = typeof app.toObject === 'function' ? app.toObject() : app;
-  // Frontend expects `student` and `job`
+  // Frontend expects `student` and `job` (keep legacy key for recruiter UI)
   if (obj.studentId && !obj.student) obj.student = obj.studentId;
   if (obj.jobId && !obj.job) obj.job = obj.jobId;
   delete obj.studentId;
@@ -41,7 +42,7 @@ const normalizeApplication = (app) => {
 
 // @desc    Apply for a job
 // @route   POST /api/applications
-// @access  Private/Student
+// @access  Private/Jobseeker
 export const applyForJob = async (req, res) => {
   try {
     // Support both:
@@ -76,11 +77,22 @@ export const applyForJob = async (req, res) => {
     const createdApp = await application.save();
 
     // Notify recruiter who posted the job
-    await Notification.create({
+    const notification = await Notification.create({
       userId: job.recruiterId,
       type: 'application_submitted',
       message: `New application submitted for "${job.title}" by ${req.user.name || req.user.email}.`,
     });
+
+    const io = getIO();
+    if (io) {
+      io.to(`user:${job.recruiterId.toString()}`).emit('new_application', {
+        id: notification._id,
+        message: notification.message,
+        createdAt: notification.createdAt,
+        read: false,
+        type: notification.type,
+      });
+    }
 
     res.status(201).json(normalizeApplication(createdApp));
   } catch (error) {
@@ -88,9 +100,9 @@ export const applyForJob = async (req, res) => {
   }
 };
 
-// @desc    Get student's applications
+// @desc    Get jobseeker's applications
 // @route   GET /api/applications/myapplications
-// @access  Private/Student
+// @access  Private/Jobseeker
 export const getMyApplications = async (req, res) => {
   try {
     const applications = await Application.find({ studentId: req.user._id })
@@ -153,7 +165,25 @@ export const updateApplicationStatus = async (req, res) => {
 
     application.status = status;
     const updatedApplication = await application.save();
-    
+
+    // Notify jobseeker about status change
+    const studentNotification = await Notification.create({
+      userId: application.studentId,
+      type: 'application_status_updated',
+      message: `Your application for "${job.title}" was ${status}.`,
+    });
+
+    const io = getIO();
+    if (io) {
+      io.to(`user:${application.studentId.toString()}`).emit('application_status_updated', {
+        id: studentNotification._id,
+        message: studentNotification.message,
+        createdAt: studentNotification.createdAt,
+        read: false,
+        type: studentNotification.type,
+      });
+    }
+
     res.json(updatedApplication);
   } catch (error) {
     res.status(400).json({ message: error.message });

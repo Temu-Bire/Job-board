@@ -16,6 +16,8 @@ import StudentDashboard from '../pages/student/Dashboard';
 import StudentProfile from '../pages/student/Profile';
 import StudentJobSearch from '../pages/student/JobSearch';
 import StudentAppliedJobs from '../pages/student/AppliedJobs';
+import Chat from '../pages/chat/Chat';
+import StudentSavedJobs from '../pages/student/SavedJobs';
 
 import RecruiterDashboard from '../pages/recruiter/Dashboard';
 import RecruiterPostJob from '../pages/recruiter/PostJob';
@@ -32,8 +34,8 @@ const AppRoutes = () => {
   const getDefaultRoute = () => {
     if (!user) return '/';
     switch (user.role) {
-      case 'student':
-        return '/student/dashboard';
+      case 'jobseeker':
+        return '/jobseeker/dashboard';
       case 'recruiter':
         return '/recruiter/dashboard';
       case 'admin':
@@ -63,34 +65,52 @@ const AppRoutes = () => {
         />
 
         <Route
-          path="/student/dashboard"
+          path="/jobseeker/dashboard"
           element={
-            <ProtectedRoute allowedRoles={['student']}>
+            <ProtectedRoute allowedRoles={['jobseeker']}>
               <StudentDashboard />
             </ProtectedRoute>
           }
         />
         <Route
-          path="/student/profile"
+          path="/jobseeker/profile"
           element={
-            <ProtectedRoute allowedRoles={['student']}>
+            <ProtectedRoute allowedRoles={['jobseeker']}>
               <StudentProfile />
             </ProtectedRoute>
           }
         />
         <Route
-          path="/student/jobs"
+          path="/jobseeker/jobs"
           element={
-            <ProtectedRoute allowedRoles={['student']}>
+            <ProtectedRoute allowedRoles={['jobseeker']}>
               <StudentJobSearch />
             </ProtectedRoute>
           }
         />
         <Route
-          path="/student/applied"
+          path="/jobseeker/applied"
           element={
-            <ProtectedRoute allowedRoles={['student']}>
+            <ProtectedRoute allowedRoles={['jobseeker']}>
               <StudentAppliedJobs />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/chat/:userId"
+          element={
+            <ProtectedRoute allowedRoles={['jobseeker', 'recruiter']}>
+              <Chat />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/jobseeker/saved"
+          element={
+            <ProtectedRoute allowedRoles={['jobseeker']}>
+              <StudentSavedJobs />
             </ProtectedRoute>
           }
         />

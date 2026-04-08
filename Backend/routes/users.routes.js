@@ -6,11 +6,12 @@ import fs from 'fs';
 import {
   getUsers,
   updateUserBasic,
-  updateStudentProfile,
+  updateJobseekerProfile,
   approveRecruiter,
   blockUser,
-  uploadStudentAvatar,
-  uploadStudentResume,
+  uploadJobseekerAvatar,
+  uploadJobseekerResume,
+  getSavedJobs,
 } from '../controllers/users.controller.js';
 import { protect, admin } from '../middleware/auth.middleware.js';
 
@@ -28,18 +29,45 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage });
+const MAX_AVATAR_BYTES = 2 * 1024 * 1024; // 2MB
+const MAX_RESUME_BYTES = 5 * 1024 * 1024; // 5MB
+
+const imageFileFilter = (req, file, cb) => {
+  const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+  if (!allowed.includes(file.mimetype)) {
+    return cb(new Error('Invalid avatar file type. Allowed: jpg, png, webp.'));
+  }
+  cb(null, true);
+};
+
+const resumeFileFilter = (req, file, cb) => {
+  const allowed = [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  ];
+  if (!allowed.includes(file.mimetype)) {
+    return cb(new Error('Invalid resume file type. Allowed: pdf, doc, docx.'));
+  }
+  cb(null, true);
+};
+
+const uploadAvatar = multer({ storage, limits: { fileSize: MAX_AVATAR_BYTES }, fileFilter: imageFileFilter });
+const uploadResume = multer({ storage, limits: { fileSize: MAX_RESUME_BYTES }, fileFilter: resumeFileFilter });
 
 const router = express.Router();
 
 router.get('/', protect, admin, getUsers);
 router.put('/:id', protect, updateUserBasic);
-router.put('/:id/student-profile', protect, updateStudentProfile);
+router.put('/:id/jobseeker-profile', protect, updateJobseekerProfile);
 router.put('/:id/approve', protect, admin, approveRecruiter);
 router.put('/:id/block', protect, admin, blockUser);
 
-router.post('/:id/student-profile/avatar', protect, upload.single('avatar'), uploadStudentAvatar);
-router.post('/:id/student-profile/resume', protect, upload.single('resume'), uploadStudentResume);
+router.post('/:id/jobseeker-profile/avatar', protect, uploadAvatar.single('avatar'), uploadJobseekerAvatar);
+router.post('/:id/jobseeker-profile/resume', protect, uploadResume.single('resume'), uploadJobseekerResume);
+
+// Saved jobs for current jobseeker
+router.get('/saved-jobs', protect, getSavedJobs);
 
 export default router;
 

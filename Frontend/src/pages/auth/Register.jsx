@@ -2,17 +2,19 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { authAPI } from '../../utils/api';
-import { UserPlus, Mail, Lock, User, Building, GraduationCap, AlertCircle } from 'lucide-react';
+import { UserPlus, Mail, Lock, User, Building, GraduationCap, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 const Register = () => {
-  const [role, setRole] = useState('student');
+  const [role, setRole] = useState('jobseeker');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     confirmPassword: '',
     name: '',
   });
-  const [studentData, setStudentData] = useState({
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [jobseekerData, setJobseekerData] = useState({
     university: '',
     degree: '',
     graduationYear: '',
@@ -32,8 +34,8 @@ const Register = () => {
     setError('');
   };
 
-  const handleStudentChange = (e) => {
-    setStudentData({ ...studentData, [e.target.name]: e.target.value });
+  const handleJobseekerChange = (e) => {
+    setJobseekerData({ ...jobseekerData, [e.target.name]: e.target.value });
   };
 
   const handleRecruiterChange = (e) => {
@@ -57,7 +59,7 @@ const Register = () => {
         password: formData.password,
         name: formData.name,
         role,
-        ...(role === 'student' ? studentData : recruiterData),
+        ...(role === 'jobseeker' ? jobseekerData : recruiterData),
       };
 
       const response = await authAPI.register(userData);
@@ -65,8 +67,8 @@ const Register = () => {
       const authData = response;
       login(authData);
 
-      if (role === 'student') {
-        navigate('/student/dashboard');
+      if (role === 'jobseeker') {
+        navigate('/jobseeker/dashboard');
       } else {
         navigate('/recruiter/dashboard');
       }
@@ -91,14 +93,14 @@ const Register = () => {
         <div className="flex gap-4 mb-8">
           <button
             type="button"
-            onClick={() => setRole('student')}
-            className={`flex-1 py-3 rounded-lg font-semibold transition-colors ${role === 'student'
+            onClick={() => setRole('jobseeker')}
+            className={`flex-1 py-3 rounded-lg font-semibold transition-colors ${role === 'jobseeker'
                 ? 'bg-blue-600 text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
               }`}
           >
             <GraduationCap className="w-5 h-5 inline-block mr-2" />
-            Student
+            Jobseeker
           </button>
           <button
             type="button"
@@ -159,14 +161,22 @@ const Register = () => {
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
                   required
-                  className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
+                  className="w-full pl-11 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
                   placeholder="Min. 8 characters"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
               </div>
             </div>
 
@@ -177,19 +187,27 @@ const Register = () => {
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
-                  type="password"
+                  type={showConfirmPassword ? 'text' : 'password'}
                   name="confirmPassword"
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   required
-                  className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
+                  className="w-full pl-11 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
                   placeholder="Re-enter password"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                  aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
               </div>
             </div>
           </div>
 
-          {role === 'student' && (
+          {role === 'jobseeker' && (
             <div className="border-t pt-6">
               <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Academic Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -200,8 +218,8 @@ const Register = () => {
                   <input
                     type="text"
                     name="university"
-                    value={studentData.university}
-                    onChange={handleStudentChange}
+                    value={jobseekerData.university}
+                    onChange={handleJobseekerChange}
                     required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
                     placeholder="Your university"
@@ -213,8 +231,8 @@ const Register = () => {
                   <input
                     type="text"
                     name="degree"
-                    value={studentData.degree}
-                    onChange={handleStudentChange}
+                    value={jobseekerData.degree}
+                    onChange={handleJobseekerChange}
                     required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
                     placeholder="Computer Science"
@@ -228,11 +246,11 @@ const Register = () => {
                   <input
                     type="number"
                     name="graduationYear"
-                    value={studentData.graduationYear}
-                    onChange={handleStudentChange}
+                    value={jobseekerData.graduationYear}
+                    onChange={handleJobseekerChange}
                     required
-                    min="2024"
-                    max="2030"
+                    min="2000"
+                    max="2027"
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
                     placeholder="2025"
                   />

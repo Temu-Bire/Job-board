@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import User from '../models/User.js';
+import Job from '../models/Job.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -58,7 +59,7 @@ export const updateUserBasic = async (req, res) => {
   }
 };
 
-export const updateStudentProfile = async (req, res) => {
+export const updateJobseekerProfile = async (req, res) => {
   try {
     const { id } = req.params;
     if (req.user._id.toString() !== id.toString() && req.user.role !== 'admin') {
@@ -116,6 +117,9 @@ export const blockUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
+    if (user.role === 'admin') {
+      return res.status(400).json({ message: 'Admin users cannot be blocked' });
+    }
     user.blocked = true;
     const saved = await user.save();
     res.json({ success: true, blocked: saved.blocked });
@@ -124,7 +128,7 @@ export const blockUser = async (req, res) => {
   }
 };
 
-export const uploadStudentAvatar = async (req, res) => {
+export const uploadJobseekerAvatar = async (req, res) => {
   try {
     ensureUploadsDir();
     const { id } = req.params;
@@ -147,7 +151,7 @@ export const uploadStudentAvatar = async (req, res) => {
   }
 };
 
-export const uploadStudentResume = async (req, res) => {
+export const uploadJobseekerResume = async (req, res) => {
   try {
     ensureUploadsDir();
     const { id } = req.params;
@@ -165,6 +169,28 @@ export const uploadStudentResume = async (req, res) => {
     const saved = await user.save();
 
     res.json({ resumeUrl, profile: saved.profile });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// @desc    Get saved jobs for current jobseeker
+// @route   GET /api/users/saved-jobs
+// @access  Private/Jobseeker
+export const getSavedJobs = async (req, res) => {
+  try {
+    if (req.user.role !== 'jobseeker') {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    const user = await User.findById(req.user._id).select('savedJobs');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const jobs = await Job.find({ _id: { $in: user.savedJobs } })
+      .sort({ createdAt: -1 })
+      .populate('recruiterId', 'name profile');
+
+    res.json(jobs);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }

@@ -1,6 +1,6 @@
 import { MapPin, Briefcase, DollarSign, Calendar, Users } from 'lucide-react';
 
-const JobCard = ({ job, onApply, showApplicants = false }) => {
+const JobCard = ({ job, onApply, onToggleSave, isSaved = false, showApplicants = false }) => {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-shadow p-6 border border-gray-100 dark:border-gray-700">
       <div className="flex justify-between items-start mb-4">
@@ -72,6 +72,20 @@ const JobCard = ({ job, onApply, showApplicants = false }) => {
           className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
         >
           Apply Now
+        </button>
+      )}
+
+      {onToggleSave && (
+        <button
+          type="button"
+          onClick={() => onToggleSave(job)}
+          className={`w-full mt-2 py-2 rounded-lg font-semibold transition-colors ${
+            isSaved
+              ? 'bg-green-600 text-white hover:bg-green-700'
+              : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-600'
+          }`}
+        >
+          {isSaved ? 'Saved' : 'Save Job'}
         </button>
       )}
     </div>

@@ -201,7 +201,7 @@ const Contact = () => {
               <div className="bg-white rounded-xl shadow-md p-6">
                 <h3 className="font-bold text-gray-800 mb-2">How do I create an account?</h3>
                 <p className="text-gray-600">
-                  Click on "Register" and choose whether you're a student or recruiter. Fill in
+                  Click on "Register" and choose whether you're a jobseeker or recruiter. Fill in
                   your details and you're ready to go!
                 </p>
               </div>
@@ -209,7 +209,7 @@ const Contact = () => {
               <div className="bg-white rounded-xl shadow-md p-6">
                 <h3 className="font-bold text-gray-800 mb-2">Is CareerConnect free to use?</h3>
                 <p className="text-gray-600">
-                  Yes! Students can browse and apply to jobs completely free. Recruiters can post
+                  Yes! Jobseekers can browse and apply to jobs completely free. Recruiters can post
                   jobs and review applications at no cost.
                 </p>
               </div>

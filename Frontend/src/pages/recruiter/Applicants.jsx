@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { applicationAPI, jobAPI } from '../../utils/api';
 import Sidebar from '../../components/Sidebar';
 import Loader from '../../components/Loader';
@@ -9,6 +9,7 @@ import { User, Mail, GraduationCap, FileText, CheckCircle, XCircle } from 'lucid
 
 const Applicants = () => {
   const { jobId } = useParams(); // ✅ Extract jobId from the URL
+  const navigate = useNavigate();
   const [job, setJob] = useState(null);
   const [applicants, setApplicants] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -109,7 +110,7 @@ const Applicants = () => {
               <User className="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">No applicants yet</h3>
               <p className="text-gray-600 dark:text-gray-300">
-                Applications will appear here once students apply.
+                Applications will appear here once jobseekers apply.
               </p>
             </div>
           ) : (
@@ -274,8 +275,17 @@ const Applicants = () => {
               </p>
             </div>
 
-            {selectedApplicant.status === 'pending' && (
-              <div className="flex justify-end gap-4 border-t pt-4">
+            <div className="flex justify-between items-center border-t pt-4 gap-4 flex-wrap">
+              <button
+                type="button"
+                onClick={() => navigate(`/chat/${selectedApplicant.student._id}`)}
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+              >
+                Message Jobseeker
+              </button>
+
+              {selectedApplicant.status === 'pending' && (
+                <div className="flex justify-end gap-4 ml-auto">
                 <button
                   onClick={() => handleUpdateStatus(selectedApplicant._id, 'rejected')}
                   className="flex items-center gap-2 px-6 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors"
@@ -290,8 +300,9 @@ const Applicants = () => {
                   <CheckCircle className="w-5 h-5" />
                   Accept
                 </button>
-              </div>
-            )}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </Modal>

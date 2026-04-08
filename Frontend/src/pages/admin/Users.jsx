@@ -54,8 +54,8 @@ const Users = () => {
   const filteredUsers =
     filter === 'all'
       ? users
-      : filter === 'students'
-      ? users.filter((user) => user.role === 'student')
+      : filter === 'jobseekers'
+      ? users.filter((user) => user.role === 'jobseeker')
       : filter === 'recruiters'
       ? users.filter((user) => user.role === 'recruiter')
       : users.filter((user) => user.role === 'recruiter' && !user.approved);
@@ -71,7 +71,7 @@ const Users = () => {
         <div className="max-w-7xl mx-auto">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-200 mb-2">User Management</h1>
-            <p className="text-gray-600 dark:text-gray-400">Manage students, recruiters, and approvals</p>
+            <p className="text-gray-600 dark:text-gray-400">Manage jobseekers, recruiters, and approvals</p>
           </div>
 
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-8">
@@ -87,14 +87,14 @@ const Users = () => {
                 All Users ({users.length})
               </button>
               <button
-                onClick={() => setFilter('students')}
+                onClick={() => setFilter('jobseekers')}
                 className={`px-6 py-2 rounded-lg font-semibold transition-colors ${
-                  filter === 'students'
+                  filter === 'jobseekers'
                     ? 'bg-blue-600 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
                 }`}
               >
-                Students ({users.filter((u) => u.role === 'student').length})
+                Jobseekers ({users.filter((u) => u.role === 'jobseeker').length})
               </button>
               <button
                 onClick={() => setFilter('recruiters')}
@@ -129,11 +129,11 @@ const Users = () => {
                 <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-full overflow-hidden bg-blue-100 flex items-center justify-center">
-                      {user.role === 'student' && user.avatarUrl ? (
+                      {user.role === 'jobseeker' && user.avatarUrl ? (
                         <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
                       ) : user.role === 'recruiter' && user.logoUrl ? (
                         <img src={user.logoUrl} alt={user.name} className="w-full h-full object-cover" />
-                      ) : user.role === 'student' ? (
+                      ) : user.role === 'jobseeker' ? (
                         <User className="w-6 h-6 text-blue-600" />
                       ) : (
                         <Building className="w-6 h-6 text-blue-600" />
@@ -169,7 +169,7 @@ const Users = () => {
                     <Mail className="w-4 h-4" />
                     {user.email}
                   </div>
-                  {user.role === 'student' && (
+                  {user.role === 'jobseeker' && (
                     <div className="text-gray-600 dark:text-gray-400">
                       <p className="font-medium">{user.university}</p>
                       <p>{user.degree}</p>
@@ -212,7 +212,7 @@ const Users = () => {
           <div className="space-y-6">
             <div className="flex items-start gap-4">
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                {selectedUser.role === 'student' ? (
+                {selectedUser.role === 'jobseeker' ? (
                   <User className="w-8 h-8 text-blue-600" />
                 ) : (
                   <Building className="w-8 h-8 text-blue-600" />
@@ -239,9 +239,9 @@ const Users = () => {
               )}
             </div>
 
-            {selectedUser.role === 'student' && (
+            {selectedUser.role === 'jobseeker' && (
               <div className="border-t pt-4 space-y-4">
-                <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Student Profile</h4>
+                <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Jobseeker Profile</h4>
                 <div className="flex items-center gap-4">
                   {selectedUser.avatarUrl && (
                     <img src={selectedUser.avatarUrl} alt="avatar" className="w-16 h-16 rounded-full object-cover" />

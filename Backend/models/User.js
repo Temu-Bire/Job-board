@@ -18,8 +18,8 @@ const userSchema = mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['student', 'recruiter', 'admin'],
-      default: 'student',
+      enum: ['jobseeker', 'recruiter', 'admin'],
+      default: 'jobseeker',
     },
     approved: {
       type: Boolean,
@@ -62,6 +62,9 @@ const userSchema = mongoose.Schema(
       githubUrl: String,
       linkedinUrl: String,
     },
+
+    // Job bookmarking for jobseekers
+    savedJobs: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Job' }],
   },
   {
     timestamps: true,

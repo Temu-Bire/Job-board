@@ -6,12 +6,12 @@ const About = () => {
     {
       icon: Target,
       title: 'Mission-Driven',
-      description: 'Empowering students to achieve their career goals through meaningful connections',
+      description: 'Empowering jobseekers to achieve their career goals through meaningful connections',
     },
     {
       icon: Users,
       title: 'Community-Focused',
-      description: 'Building a supportive network of students, professionals, and recruiters',
+      description: 'Building a supportive network of jobseekers, professionals, and recruiters',
     },
     {
       icon: Zap,
@@ -32,7 +32,7 @@ const About = () => {
           <div className="max-w-3xl">
             <h1 className="text-5xl md:text-6xl font-bold mb-6">About CareerConnect</h1>
             <p className="text-xl md:text-2xl text-blue-100">
-              We're on a mission to bridge the gap between talented students and amazing career
+              We're on a mission to bridge the gap between talented jobseekers and amazing career
               opportunities
             </p>
           </div>
@@ -46,17 +46,17 @@ const About = () => {
               <h2 className="text-4xl font-bold text-gray-800 mb-6">Our Story</h2>
               <div className="space-y-4 text-lg text-gray-700">
                 <p>
-                  Founded in 2024, CareerConnect was born from a simple observation: students and
+                  Founded in 2024, CareerConnect was born from a simple observation: jobseekers and
                   recent graduates struggle to find relevant internships and entry-level positions,
                   while companies struggle to connect with qualified young talent.
                 </p>
                 <p>
                   We built CareerConnect to solve this problem by creating a platform that makes it
-                  easy for students to discover opportunities and for recruiters to find their next
+                  easy for jobseekers to discover opportunities and for recruiters to find their next
                   great hire.
                 </p>
                 <p>
-                  Today, we're proud to serve thousands of students and hundreds of companies,
+                  Today, we're proud to serve thousands of jobseekers and hundreds of companies,
                   facilitating meaningful connections that launch careers and build teams.
                 </p>
               </div>
@@ -65,7 +65,7 @@ const About = () => {
               <div className="space-y-8">
                 <div>
                   <div className="text-5xl font-bold text-blue-600 mb-2">10,000+</div>
-                  <p className="text-gray-700 font-semibold">Active Students</p>
+                  <p className="text-gray-700 font-semibold">Active Jobseekers</p>
                 </div>
                 <div>
                   <div className="text-5xl font-bold text-blue-600 mb-2">500+</div>
@@ -112,7 +112,7 @@ const About = () => {
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-800 mb-4">How It Works</h2>
             <p className="text-xl text-gray-600">
-              Simple steps to connect students with opportunities
+              Simple steps to connect jobseekers with opportunities
             </p>
           </div>
 
@@ -155,7 +155,7 @@ const About = () => {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-4xl font-bold mb-6">Join Our Growing Community</h2>
           <p className="text-xl mb-8 text-blue-100">
-            Whether you're a student looking for opportunities or a company seeking talent, we're
+            Whether you're a jobseeker looking for opportunities or a company seeking talent, we're
             here to help
           </p>
           <div className="flex gap-4 justify-center">

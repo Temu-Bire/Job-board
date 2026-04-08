@@ -23,11 +23,12 @@ const Dashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      const [jobs, statsData] = await Promise.all([
-        jobAPI.getAllJobs(),
-        statsAPI.getStudentStats(),
+      const [jobsResponse, statsData] = await Promise.all([
+        jobAPI.getAllJobs({ page: 1, limit: 20 }),
+        statsAPI.getJobseekerStats(),
       ]);
 
+      const jobs = jobsResponse.jobs || [];
       setRecentJobs(jobs.slice(0, 3));
       // statsData structure from backend: { totalJobs, appliedJobs, pendingApplications, acceptedApplications }
       setStats(statsData);
@@ -104,7 +105,7 @@ const Dashboard = () => {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
               <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Recent Job Postings</h2>
               <Link
-                to="/student/jobs"
+                to="/jobseeker/jobs"
                 className="text-blue-600 font-semibold hover:text-blue-700"
               >
                 View All
@@ -130,7 +131,7 @@ const Dashboard = () => {
                       </div>
                     </div>
                     <Link
-                      to="/student/jobs"
+                      to="/jobseeker/jobs"
                       className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
                     >
                       View Details
@@ -139,20 +140,6 @@ const Dashboard = () => {
                 </div>
               ))}
             </div>
-          </div>
-
-          <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl shadow-md p-8 text-white">
-            <h2 className="text-2xl font-bold mb-4">Complete Your Profile</h2>
-            <p className="mb-6">
-              A complete profile increases your chances of getting hired. Add your resume, skills,
-              and experience.
-            </p>
-            <Link
-              to="/student/profile"
-              className="inline-block bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
-            >
-              Update Profile
-            </Link>
           </div>
         </div>
       </div>
