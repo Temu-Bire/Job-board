@@ -170,7 +170,7 @@ const ManageJobs = () => {
       <Sidebar />
       <div className="flex-1 p-8">
         <div className="max-w-7xl mx-auto">
-          <div className="mb-8 flex justify-between items-center">
+          <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">Manage Jobs</h1>
               <p className="text-gray-600 dark:text-gray-300">View and manage all your job postings</p>
@@ -201,7 +201,7 @@ const ManageJobs = () => {
                   key={job._id || job.id}
                   className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow"
                 >
-                  <div className="flex justify-between items-start mb-4">
+                  <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-4">
                     <div>
                       <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">{job.title}</h3>
                       <p className="text-blue-600 font-semibold mb-2">{job.company}</p>
@@ -228,7 +228,7 @@ const ManageJobs = () => {
 
                   <p className="text-gray-600 dark:text-gray-400 mb-4">{job.description}</p>
 
-                  <div className="flex gap-3">
+                  <div className="flex flex-wrap gap-3 mt-4">
                     <Link
                       to={`/recruiter/applicants/${job._id || job.id}`}
                       className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors"

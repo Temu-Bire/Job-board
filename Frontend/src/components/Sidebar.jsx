@@ -42,7 +42,7 @@ const Sidebar = () => {
   const links = getLinks();
 
   return (
-    <aside className="w-64 bg-white dark:bg-gray-800 shadow-lg h-screen sticky top-16">
+    <aside className="hidden md:block w-64 bg-white dark:bg-gray-800 shadow-lg h-[calc(100vh-4rem)] sticky top-16">
       <nav className="p-4 space-y-2">
         {links.map(({ path, label, icon: Icon }) => (
           <Link

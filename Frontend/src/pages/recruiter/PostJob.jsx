@@ -190,7 +190,7 @@ const PostJob = () => {
                   <DollarSign className="w-4 h-4 inline mr-2" />
                   Salary Range
                 </label>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-4 sm:gap-2">
                   <input
                     type="number"
                     name="salaryMin"
@@ -198,7 +198,7 @@ const PostJob = () => {
                     onChange={handleChange}
                     required
                     placeholder="Min"
-                    className="w-1/2 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
+                    className="w-full sm:w-1/2 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
                   />
                   <input
                     type="number"
@@ -207,7 +207,7 @@ const PostJob = () => {
                     onChange={handleChange}
                     required
                     placeholder="Max"
-                    className="w-1/2 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
+                    className="w-full sm:w-1/2 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
                   />
                 </div>
               </div>
@@ -227,20 +227,20 @@ const PostJob = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Application Window</label>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-4 sm:gap-2">
                   <input
                     type="date"
                     name="applicationStart"
                     value={formData.applicationStart}
                     onChange={handleChange}
-                    className="w-1/2 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
+                    className="w-full sm:w-1/2 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
                   />
                   <input
                     type="date"
                     name="applicationEnd"
                     value={formData.applicationEnd}
                     onChange={handleChange}
-                    className="w-1/2 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
+                    className="w-full sm:w-1/2 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
                   />
                 </div>
               </div>
@@ -325,18 +325,18 @@ const PostJob = () => {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-4 pt-6 border-t">
+              <div className="flex flex-col-reverse sm:flex-row justify-end gap-4 pt-6 border-t">
                 <button
                   type="button"
                   onClick={() => navigate('/recruiter/dashboard')}
-                  className="px-6 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                  className="w-full sm:w-auto px-6 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading || recruiterNotApproved}
-                  className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:bg-blue-400"
+                  className="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:bg-blue-400"
                 >
                   {loading ? 'Posting...' : recruiterNotApproved ? 'Pending Approval' : 'Post Job'}
                 </button>

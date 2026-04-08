@@ -61,8 +61,8 @@ const Register = () => {
       };
 
       const response = await authAPI.register(userData);
-      // Backend returns { token: '...', user: { ... } }
-      const authData = { ...response.user, token: response.token };
+      // Backend returns { token: '...', name: '...', role: '...' } directly
+      const authData = response;
       login(authData);
 
       if (role === 'student') {

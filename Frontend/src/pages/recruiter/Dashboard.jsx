@@ -121,7 +121,7 @@ const Dashboard = () => {
           </div>
 
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-8">
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
               <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Recent Job Postings</h2>
               <Link
                 to="/recruiter/jobs"
@@ -150,11 +150,11 @@ const Dashboard = () => {
                       key={job._id || job.id}
                     className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-blue-300 transition-colors dark:hover:border-blue-500"
                   >
-                    <div className="flex justify-between items-start">
+                    <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                       <div>
                         <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-1">{job.title}</h3>
                         <p className="text-gray-600 dark:text-gray-300 mb-2">{job.location}</p>
-                        <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+                        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
                           <span className="flex items-center gap-1">
                             <Users className="w-4 h-4" />
                             {(job.applicantsCount || 0)} applicants

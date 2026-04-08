@@ -26,12 +26,11 @@ const Login = () => {
 
     try {
       const response = await authAPI.login(formData.email, formData.password);
-      // Backend returns { token: '...', user: { ... } }
-      // We want to store { ...user, token } in AuthContext
-      const authData = { ...response.user, token: response.token };
+      // Backend returns { token: '...', name: '...', role: '...' } directly
+      const authData = response;
       login(authData);
 
-      switch (response.user.role) {
+      switch (authData.role) {
         case 'student':
           navigate('/student/dashboard');
           break;
