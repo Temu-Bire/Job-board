@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import { applicationAPI, jobAPI } from '../../utils/api';
 import Sidebar from '../../components/Sidebar';
@@ -10,59 +11,51 @@ import { User, Mail, GraduationCap, FileText, CheckCircle, XCircle } from 'lucid
 const Applicants = () => {
   const { jobId } = useParams(); // ✅ Extract jobId from the URL
   const navigate = useNavigate();
-  const [job, setJob] = useState(null);
-  const [applicants, setApplicants] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const validJobId = jobId && jobId !== 'undefined';
   const [selectedApplicant, setSelectedApplicant] = useState(null);
   const [toast, setToast] = useState(null);
 
-  useEffect(() => {
-    if (jobId && jobId !== 'undefined') {
-      fetchData();
-    } else {
-      setLoading(false);
-      setToast({ message: 'Invalid Job ID', type: 'error' });
-    }
-  }, [jobId]);
+  const { data: job, isLoading: jobLoading } = useQuery({
+    queryKey: ['job', jobId],
+    queryFn: () => jobAPI.getJobById(jobId),
+    enabled: validJobId,
+  });
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const [jobData, applicantsData] = await Promise.all([
-        jobAPI.getJobById(jobId),
-        applicationAPI.getJobApplicants(jobId),
-      ]);
+  const { data: applicants = [], isLoading: applicantsLoading } = useQuery({
+    queryKey: ['applicants', jobId],
+    queryFn: () => applicationAPI.getJobApplicants(jobId),
+    enabled: validJobId,
+  });
 
-      setJob(jobData);
-      setApplicants(applicantsData);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      setToast({ message: 'Failed to load applicants', type: 'error' });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const isLoading = jobLoading || applicantsLoading;
 
-  const handleUpdateStatus = async (applicationId, status) => {
-    try {
-      await applicationAPI.updateApplicationStatus(applicationId, status);
-      setApplicants((prev) =>
-        prev.map((app) =>
-          app._id === applicationId ? { ...app, status } : app
-        )
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ applicationId, status }) => applicationAPI.updateApplicationStatus(applicationId, status),
+    onSuccess: (_, { applicationId, status }) => {
+      queryClient.setQueryData(['applicants', jobId], (old) =>
+        old.map((app) => (app._id === applicationId ? { ...app, status } : app))
       );
       setToast({
         message: `Application ${status === 'accepted' ? 'accepted' : 'rejected'}`,
         type: 'success',
       });
       setSelectedApplicant(null);
-    } catch (error) {
-      console.error('Error updating application status:', error);
+    },
+    onError: () => {
       setToast({ message: 'Failed to update status', type: 'error' });
-    }
+    },
+  });
+
+  const handleUpdateStatus = (applicationId, status) => {
+    updateStatusMutation.mutate({ applicationId, status });
   };
 
-  if (loading) return <Loader fullScreen />;
+  if (!validJobId) {
+    return <div className="p-8 text-center text-red-600">Invalid Job ID</div>;
+  }
+
+  if (isLoading) return <Loader fullScreen />;
 
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -288,17 +281,19 @@ const Applicants = () => {
                 <div className="flex justify-end gap-4 ml-auto">
                 <button
                   onClick={() => handleUpdateStatus(selectedApplicant._id, 'rejected')}
-                  className="flex items-center gap-2 px-6 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors"
+                  disabled={updateStatusMutation.isPending}
+                  className="flex items-center gap-2 px-6 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors disabled:opacity-50"
                 >
                   <XCircle className="w-5 h-5" />
-                  Reject
+                  {updateStatusMutation.isPending && updateStatusMutation.variables?.status === 'rejected' ? 'Rejecting...' : 'Reject'}
                 </button>
                 <button
                   onClick={() => handleUpdateStatus(selectedApplicant._id, 'accepted')}
-                  className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors"
+                  disabled={updateStatusMutation.isPending}
+                  className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:opacity-50"
                 >
                   <CheckCircle className="w-5 h-5" />
-                  Accept
+                  {updateStatusMutation.isPending && updateStatusMutation.variables?.status === 'accepted' ? 'Accepting...' : 'Accept'}
                 </button>
                 </div>
               )}

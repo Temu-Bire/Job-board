@@ -1,11 +1,12 @@
 import express from 'express';
 import { protect } from '../middleware/auth.middleware.js';
-import { getConversation, sendMessage } from '../controllers/messages.controller.js';
+import { getConversation, sendMessage, getConversations } from '../controllers/messages.controller.js';
 import { validate, objectIdSchema } from '../middleware/validate.middleware.js';
 import { z } from 'zod';
 
 const router = express.Router();
 
+router.get('/', protect, getConversations);
 router.get('/:userId', protect, validate({ params: z.object({ userId: objectIdSchema }) }), getConversation);
 router.post(
   '/:userId',

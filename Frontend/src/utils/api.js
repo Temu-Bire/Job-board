@@ -201,6 +201,11 @@ export const notificationAPI = {
 };
 
 export const messageAPI = {
+  getConversations: async () => {
+    const response = await api.get(`/messages`);
+    return response;
+  },
+
   getConversation: async (userId) => {
     const response = await api.get(`/messages/${userId}`);
     return response;

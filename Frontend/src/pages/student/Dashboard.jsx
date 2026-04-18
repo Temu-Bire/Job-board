@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
 import { jobAPI, applicationAPI, statsAPI } from '../../utils/api';
 import Sidebar from '../../components/Sidebar';
@@ -8,38 +8,27 @@ import { Link } from 'react-router-dom';
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
+  const { data: jobsResponse, isLoading: isLoadingJobs } = useQuery({
+    queryKey: ['recentJobs'],
+    queryFn: () => jobAPI.getAllJobs({ page: 1, limit: 20 }),
+  });
+
+  const { data: statsData, isLoading: isLoadingStats } = useQuery({
+    queryKey: ['jobseekerStats'],
+    queryFn: () => statsAPI.getJobseekerStats(),
+  });
+
+  const isLoading = isLoadingJobs || isLoadingStats;
+
+  const recentJobs = jobsResponse?.jobs?.slice(0, 3) || [];
+  const stats = statsData || {
     totalJobs: 0,
     appliedJobs: 0,
     pendingApplications: 0,
     acceptedApplications: 0,
-  });
-  const [recentJobs, setRecentJobs] = useState([]);
-
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
-    try {
-      const [jobsResponse, statsData] = await Promise.all([
-        jobAPI.getAllJobs({ page: 1, limit: 20 }),
-        statsAPI.getJobseekerStats(),
-      ]);
-
-      const jobs = jobsResponse.jobs || [];
-      setRecentJobs(jobs.slice(0, 3));
-      // statsData structure from backend: { totalJobs, appliedJobs, pendingApplications, acceptedApplications }
-      setStats(statsData);
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-    } finally {
-      setLoading(false);
-    }
   };
 
-  if (loading) {
+  if (isLoading) {
     return <Loader fullScreen />;
   }
 

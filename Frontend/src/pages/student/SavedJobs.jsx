@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
 import { userAPI, applicationAPI, jobAPI } from '../../utils/api';
 import Sidebar from '../../components/Sidebar';
@@ -13,34 +14,32 @@ const SavedJobs = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [loading, setLoading] = useState(true);
-  const [savedJobs, setSavedJobs] = useState([]);
-  const [toast, setToast] = useState(null);
+  const queryClient = useQueryClient();
 
-  // Apply modal state
-  const [selectedJob, setSelectedJob] = useState(null);
-  const [showApplyModal, setShowApplyModal] = useState(false);
-  const [coverLetter, setCoverLetter] = useState('');
-  const [applying, setApplying] = useState(false);
-
-  const loadSavedJobs = async () => {
-    setLoading(true);
-    try {
+  const { data: savedJobs = [], isLoading } = useQuery({
+    queryKey: ['savedJobs'],
+    queryFn: async () => {
       const list = await userAPI.getSavedJobs();
-      setSavedJobs(list || []);
-    } catch (error) {
-      console.error('Error loading saved jobs:', error);
-      const msg = error?.message || error?.data?.message || 'Failed to load saved jobs';
-      setToast({ message: msg, type: 'error' });
-    } finally {
-      setLoading(false);
-    }
-  };
+      return list || [];
+    },
+  });
 
-  useEffect(() => {
-    loadSavedJobs();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const toggleSaveMutation = useMutation({
+    mutationFn: async (jobId) => {
+      await jobAPI.unsaveJob(jobId);
+      return jobId;
+    },
+    onSuccess: (jobId) => {
+      queryClient.setQueryData(['savedJobs'], (oldData) => 
+        oldData ? oldData.filter(job => job._id !== jobId) : []
+      );
+      setToast({ message: 'Removed from saved jobs', type: 'success' });
+    },
+    onError: (error) => {
+      const msg = error?.message || error?.data?.message || 'Failed to update saved job';
+      setToast({ message: msg, type: 'error' });
+    }
+  });
 
   const handleApply = (job) => {
     setSelectedJob(job);
@@ -75,20 +74,11 @@ const SavedJobs = () => {
     }
   };
 
-  const handleToggleSave = async (job) => {
-    if (!job?._id) return;
-    try {
-      await jobAPI.unsaveJob(job._id);
-      setSavedJobs((prev) => prev.filter((j) => j._id !== job._id));
-      setToast({ message: 'Removed from saved jobs', type: 'success' });
-    } catch (error) {
-      console.error('Error removing saved job:', error);
-      const msg = error?.message || error?.data?.message || 'Failed to update saved job';
-      setToast({ message: msg, type: 'error' });
-    }
+  const handleToggleSave = (job) => {
+    if (job?._id) toggleSaveMutation.mutate(job._id);
   };
 
-  if (loading) return <Loader fullScreen />;
+  if (isLoading) return <Loader fullScreen />;
 
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">

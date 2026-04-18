@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
 import { jobAPI, statsAPI } from '../../utils/api';
 import Sidebar from '../../components/Sidebar';
@@ -9,40 +9,28 @@ import { Link } from 'react-router-dom';
 const Dashboard = () => {
   const { user } = useAuth();
   const recruiterNotApproved = user?.role === 'recruiter' && user?.approved === false;
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
+  const { data: jobs = [], isLoading: isLoadingJobs } = useQuery({
+    queryKey: ['recruiterJobs'],
+    queryFn: () => jobAPI.getRecruiterJobs(),
+    enabled: !recruiterNotApproved,
+  });
+
+  const { data: statsData, isLoading: isLoadingStats } = useQuery({
+    queryKey: ['recruiterStats'],
+    queryFn: () => statsAPI.getRecruiterStats(),
+    enabled: !recruiterNotApproved,
+  });
+
+  const isLoading = isLoadingJobs || isLoadingStats;
+  const recentJobs = jobs.slice(0, 3);
+  const stats = statsData || {
     totalJobs: 0,
     activeJobs: 0,
     totalApplicants: 0,
     totalViews: 0,
-  });
-  const [recentJobs, setRecentJobs] = useState([]);
-
-  useEffect(() => {
-    if (recruiterNotApproved) {
-      setLoading(false);
-      return;
-    }
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
-    try {
-      const [jobs, statsData] = await Promise.all([
-        jobAPI.getRecruiterJobs(),
-        statsAPI.getRecruiterStats(),
-      ]);
-
-      setRecentJobs(jobs.slice(0, 3));
-      setStats(statsData);
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-    } finally {
-      setLoading(false);
-    }
   };
 
-  if (loading) {
+  if (isLoading && !recruiterNotApproved) {
     return <Loader fullScreen />;
   }
 

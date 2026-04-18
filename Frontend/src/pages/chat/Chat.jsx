@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import { useAuth } from '../../context/AuthContext';
@@ -11,9 +12,7 @@ const Chat = () => {
   const { user } = useAuth();
   const { userId } = useParams();
 
-  const [partner, setPartner] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [messages, setMessages] = useState([]);  
   const [toast, setToast] = useState(null);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
@@ -26,22 +25,19 @@ const Chat = () => {
     }
   };
 
+  const { data, isLoading } = useQuery({
+    queryKey: ['conversation', userId],
+    queryFn: () => messageAPI.getConversation(userId),
+    enabled: !!userId,
+  });
+
+  const partner = data?.partner || null;
+
   useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      try {
-        const { partner: p, messages: initial } = await messageAPI.getConversation(userId);
-        setPartner(p);
-        setMessages(initial || []);
-      } catch (error) {
-        const msg = error?.message || error?.data?.message || 'Failed to load conversation';
-        setToast({ message: msg, type: 'error' });
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, [userId]);
+    if (data?.messages) {
+      setMessages(data.messages);
+    }
+  }, [data]);
 
   useEffect(() => {
     scrollToBottom();
@@ -51,7 +47,7 @@ const Chat = () => {
     const token = localStorage.getItem('token');
     if (!token) return undefined;
 
-    const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://127.0.0.1:5000';
+    const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || (import.meta.env.PROD ? window.location.origin : 'http://127.0.0.1:5000');
     const socket = io(SOCKET_URL, {
       auth: { token },
     });
@@ -92,7 +88,7 @@ const Chat = () => {
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return <Loader fullScreen />;
   }
 

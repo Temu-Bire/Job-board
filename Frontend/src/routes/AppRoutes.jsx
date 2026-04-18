@@ -19,6 +19,7 @@ import StudentProfile from '../pages/student/Profile';
 import StudentJobSearch from '../pages/student/JobSearch';
 import StudentAppliedJobs from '../pages/student/AppliedJobs';
 import Chat from '../pages/chat/Chat';
+import Inbox from '../pages/chat/Inbox';
 import StudentSavedJobs from '../pages/student/SavedJobs';
 import JobseekerManageProfile from '../pages/jobseeker/ManageProfile';
 
@@ -108,6 +109,14 @@ const AppRoutes = () => {
           }
         />
 
+        <Route
+          path="/chat"
+          element={
+            <ProtectedRoute allowedRoles={['jobseeker', 'recruiter']}>
+              <Inbox />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/chat/:userId"
           element={

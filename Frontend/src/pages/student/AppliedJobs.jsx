@@ -1,30 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { applicationAPI } from '../../utils/api';
 import Sidebar from '../../components/Sidebar';
 import Loader from '../../components/Loader';
-import { CheckCircle, XCircle, Clock, Calendar, Briefcase, User } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Calendar, Briefcase, User, MessageSquare } from 'lucide-react';
 
 const AppliedJobs = () => {
   const { user } = useAuth();
-  const [applications, setApplications] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
   const [filter, setFilter] = useState('all');
 
-  useEffect(() => {
-    fetchApplications();
-  }, []);
-
-  const fetchApplications = async () => {
-    try {
-      const data = await applicationAPI.getJobseekerApplications(user._id);
-      setApplications(data);
-    } catch (error) {
-      console.error('Error fetching applications:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: applications = [], isLoading } = useQuery({
+    queryKey: ['applications', user._id],
+    queryFn: () => applicationAPI.getJobseekerApplications(user._id),
+  });
 
   const getStatusConfig = (status) => {
     switch (status) {
@@ -41,7 +32,7 @@ const AppliedJobs = () => {
     ? applications
     : applications.filter((app) => app.status === filter);
 
-  if (loading) return <Loader fullScreen />;
+  if (isLoading) return <Loader fullScreen />;
 
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -122,9 +113,17 @@ const AppliedJobs = () => {
                     </div>
 
                     <div className="border-t pt-4 mt-4">
-                      <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
-                        <span>Location: {application.job.location}</span>
-                        <span>Salary: {application.job.salaryMin} - {application.job.salaryMax}</span>
+                      <div className="flex items-center justify-between flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
+                        <div className="flex gap-4">
+                          <span>Location: {application.job.location}</span>
+                          <span>Salary: {application.job.salaryMin} - {application.job.salaryMax}</span>
+                        </div>
+                        <button
+                          onClick={() => navigate(`/chat/${application.job.recruiterId}`)}
+                          className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 dark:bg-gray-700 dark:text-blue-400 rounded-lg font-medium hover:bg-blue-100 dark:hover:bg-gray-600 transition-colors"
+                        >
+                          <MessageSquare className="w-4 h-4" /> Message Recruiter
+                        </button>
                       </div>
                     </div>
                   </div>

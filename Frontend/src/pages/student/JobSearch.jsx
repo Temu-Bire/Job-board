@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { jobAPI, applicationAPI, userAPI } from '../../utils/api';
 import Sidebar from '../../components/Sidebar';
@@ -7,11 +7,14 @@ import Modal from '../../components/Modal';
 import Toast from '../../components/Toast';
 import Loader from '../../components/Loader';
 import { Search, MapPin, Briefcase, Filter } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { useDebounce } from '../../hooks/useDebounce';
 
 const JobSearch = () => {
   const { user } = useAuth();
-  const [jobs, setJobs] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+
+  // Local state
   const [filters, setFilters] = useState({
     search: '',
     location: '',
@@ -20,81 +23,84 @@ const JobSearch = () => {
     salaryMax: '',
   });
   const [page, setPage] = useState(1);
-  const [pages, setPages] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [savedJobIds, setSavedJobIds] = useState([]);
+
+  // Modals / Applications
   const [selectedJob, setSelectedJob] = useState(null);
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [coverLetter, setCoverLetter] = useState('');
   const [applying, setApplying] = useState(false);
   const [toast, setToast] = useState(null);
 
-  useEffect(() => {
-    // Load saved jobs once so the Save/Unsaved button state is correct.
-    const loadSavedJobs = async () => {
-      try {
-        const savedJobs = await userAPI.getSavedJobs();
-        setSavedJobIds((savedJobs || []).map((j) => j._id));
-      } catch (e) {
-        // If it fails, still allow browsing/applying.
-        setSavedJobIds([]);
-      }
-    };
-    loadSavedJobs();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Debounced filter values
+  const debouncedSearch = useDebounce(filters.search, 500);
+  const debouncedLocation = useDebounce(filters.location, 500);
+  const debouncedType = useDebounce(filters.type, 500);
+  // Optional: debounce numbers too so rapid typing doesn't trigger requests
+  const debouncedSalaryMin = useDebounce(filters.salaryMin, 500);
+  const debouncedSalaryMax = useDebounce(filters.salaryMax, 500);
 
-  useEffect(() => {
-    fetchJobs(page);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, filters.search, filters.location, filters.type, filters.salaryMin, filters.salaryMax]);
+  // Query: Saved Jobs
+  const { data: savedJobsData } = useQuery({
+    queryKey: ['savedJobs'],
+    queryFn: () => userAPI.getSavedJobs(),
+    staleTime: 5 * 60 * 1000, // 5 min
+  });
+  const savedJobIds = savedJobsData ? savedJobsData.map((j) => j._id) : [];
 
-  const handleToggleSave = async (job) => {
-    const jobId = job?._id;
-    if (!jobId) return;
+  // Query: Jobs Pagination & Search
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: [
+      'jobs',
+      page,
+      debouncedSearch,
+      debouncedLocation,
+      debouncedType,
+      debouncedSalaryMin,
+      debouncedSalaryMax,
+    ],
+    queryFn: () =>
+      jobAPI.getAllJobs({
+        page,
+        limit: 9,
+        search: debouncedSearch,
+        location: debouncedLocation,
+        type: debouncedType,
+        salaryMin: debouncedSalaryMin,
+        salaryMax: debouncedSalaryMax,
+      }),
+    placeholderData: keepPreviousData, // Preserve job cards visually while fetching next page or filter
+  });
 
-    try {
+  const jobs = data?.jobs || [];
+  const pages = data?.pages || 1;
+  const total = data?.total || jobs.length || 0;
+
+  // Mutation: Save / Unsave Job
+  const toggleSaveMutation = useMutation({
+    mutationFn: async (jobId) => {
       if (savedJobIds.includes(jobId)) {
         await jobAPI.unsaveJob(jobId);
-        setSavedJobIds((prev) => prev.filter((id) => id !== jobId));
       } else {
         await jobAPI.saveJob(jobId);
-        setSavedJobIds((prev) => [...prev, jobId]);
       }
-    } catch (error) {
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['savedJobs'] });
+    },
+    onError: (error) => {
       const msg = error?.message || error?.data?.message || 'Failed to update saved job';
       setToast({ message: msg, type: 'error' });
-    }
-  };
+    },
+  });
 
-  const fetchJobs = async (pageToLoad = 1) => {
-    try {
-      setLoading(true);
-      const response = await jobAPI.getAllJobs({
-        page: pageToLoad,
-        limit: 9,
-        search: filters.search,
-        location: filters.location,
-        type: filters.type,
-        salaryMin: filters.salaryMin,
-        salaryMax: filters.salaryMax,
-      });
-      setJobs(response.jobs || []);
-      setPage(response.page || pageToLoad);
-      setPages(response.pages || 1);
-      setTotal(response.total || (response.jobs || []).length);
-    } catch (error) {
-      console.error('Error fetching jobs:', error);
-      setToast({ message: 'Failed to load jobs', type: 'error' });
-    } finally {
-      setLoading(false);
-    }
+  const handleToggleSave = (job) => {
+    if (job?._id) toggleSaveMutation.mutate(job._id);
   };
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters((prev) => ({ ...prev, [name]: value }));
-    setPage(1);
+    setPage(1); // Reset page on filter changes
   };
 
   const handleApply = (job) => {
@@ -105,29 +111,23 @@ const JobSearch = () => {
   const submitApplication = async () => {
     const token = localStorage.getItem('token');
     if (!token) {
-      setToast({ 
-        message: 'Please log in to apply for jobs', 
-        type: 'error' 
-      });
+      setToast({ message: 'Please log in to apply for jobs', type: 'error' });
       return;
     }
 
     setApplying(true);
     try {
-      const applicationData = {
-        coverLetter,
-      };
-      
-      await applicationAPI.applyForJob(selectedJob._id, applicationData);
-      setToast({ 
-        message: 'Application submitted successfully!', 
-        type: 'success' 
-      });
+      await applicationAPI.applyForJob(selectedJob._id, { coverLetter });
+      setToast({ message: 'Application submitted successfully!', type: 'success' });
       setShowApplyModal(false);
       setCoverLetter('');
     } catch (error) {
       console.error('Application submission error:', error);
-      const msg = error?.message || error?.data?.message || error?.response?.data?.message || 'Failed to submit application';
+      const msg =
+        error?.message ||
+        error?.data?.message ||
+        error?.response?.data?.message ||
+        'Failed to submit application';
       if (error.response?.status === 401) {
         setToast({ message: 'Session expired. Please log in again.', type: 'error' });
         localStorage.removeItem('token');
@@ -139,7 +139,8 @@ const JobSearch = () => {
     }
   };
 
-  if (loading) {
+  // Only show the blocking fullScreen loader on the EXACT first mount
+  if (isLoading) {
     return <Loader fullScreen />;
   }
 
@@ -148,11 +149,19 @@ const JobSearch = () => {
       <Sidebar />
       <div className="flex-1 p-8">
         <div className="max-w-7xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">Find Your Dream Job</h1>
-            <p className="text-gray-600 dark:text-gray-300">
-              Browse through {total || jobs.length} available opportunities
-            </p>
+          <div className="mb-8 flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">Find Your Dream Job</h1>
+              <p className="text-gray-600 dark:text-gray-300">
+                Browse through {total || jobs.length} available opportunities
+              </p>
+            </div>
+            {/* Elegant sub-loader that pulses when a background fetch (like filtering) occurs without unmounting UI */}
+            {isFetching && (
+              <div className="hidden sm:flex items-center gap-2 text-blue-600 bg-blue-50 dark:bg-blue-900/30 px-4 py-2 rounded-full font-medium">
+                <Loader size="sm" /> Updating list...
+              </div>
+            )}
           </div>
 
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-8 border border-gray-200 dark:border-gray-700">
@@ -233,7 +242,8 @@ const JobSearch = () => {
             Showing page {page} of {pages} ({total} job{total !== 1 ? 's' : ''})
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Opacity shifts to 50% during background fetching so users know data is refreshing */}
+          <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 transition-opacity duration-200 ${isFetching ? 'opacity-50' : 'opacity-100'}`}>
             {jobs.map((job) => (
               <JobCard
                 key={job._id}
@@ -245,7 +255,7 @@ const JobSearch = () => {
             ))}
           </div>
 
-          {jobs.length === 0 && (
+          {!isFetching && jobs.length === 0 && (
             <div className="text-center py-12">
               <p className="text-gray-600 dark:text-gray-400 text-lg">No jobs found matching your criteria</p>
             </div>

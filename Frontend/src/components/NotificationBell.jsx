@@ -55,11 +55,13 @@ const NotificationBell = () => {
     socket.on('new_job_posted', handleIncoming);
     socket.on('new_application', handleIncoming);
     socket.on('application_status_updated', handleIncoming);
+    socket.on('new_message_notification', handleIncoming);
 
     return () => {
       socket.off('new_job_posted', handleIncoming);
       socket.off('new_application', handleIncoming);
       socket.off('application_status_updated', handleIncoming);
+      socket.off('new_message_notification', handleIncoming);
       socket.disconnect();
     };
   }, []);

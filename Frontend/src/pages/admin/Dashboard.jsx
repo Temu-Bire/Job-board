@@ -1,29 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { statsAPI } from '../../utils/api';
 import Sidebar from '../../components/Sidebar';
 import Loader from '../../components/Loader';
 import { Users, Briefcase, FileText, TrendingUp, UserCheck, Activity } from 'lucide-react';
 
 const Dashboard = () => {
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState(null);
+  const { data: stats = {}, isLoading } = useQuery({
+    queryKey: ['adminStats'],
+    queryFn: () => statsAPI.getAdminStats(),
+  });
 
-  useEffect(() => {
-    fetchStats();
-  }, []);
-
-  const fetchStats = async () => {
-    try {
-      const data = await statsAPI.getAdminStats();
-      setStats(data);
-    } catch (error) {
-      console.error('Error fetching stats:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
+  if (isLoading) {
     return <Loader fullScreen />;
   }
 

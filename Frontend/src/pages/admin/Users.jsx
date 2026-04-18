@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { userAPI } from '../../utils/api';
 import Sidebar from '../../components/Sidebar';
 import Loader from '../../components/Loader';
@@ -7,51 +8,49 @@ import Modal from '../../components/Modal';
 import { User, UserCheck, UserX, CheckCircle, XCircle, Mail, Building } from 'lucide-react';
 
 const Users = () => {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const { data: users = [], isLoading } = useQuery({
+    queryKey: ['adminUsers'],
+    queryFn: () => userAPI.getAllUsers(),
+  });
   const [filter, setFilter] = useState('all');
   const [selectedUser, setSelectedUser] = useState(null);
   const [toast, setToast] = useState(null);
   const [resetPasswordValue, setResetPasswordValue] = useState('');
   const [resettingPassword, setResettingPassword] = useState(false);
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
 
-  const fetchUsers = async () => {
-    try {
-      const data = await userAPI.getAllUsers();
-      setUsers(data);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      setToast({ message: 'Failed to load users', type: 'error' });
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const handleApprove = async (userId) => {
-    try {
-      await userAPI.approveRecruiter(userId);
-      setUsers(users.map((user) => (user._id === userId ? { ...user, approved: true } : user)));
+  const approveMutation = useMutation({
+    mutationFn: (userId) => userAPI.approveRecruiter(userId),
+    onSuccess: (_, userId) => {
+      queryClient.setQueryData(['adminUsers'], (old) =>
+        old ? old.map((u) => (u._id === userId ? { ...u, approved: true } : u)) : []
+      );
       setToast({ message: 'Recruiter approved successfully', type: 'success' });
       setSelectedUser(null);
-    } catch (error) {
+    },
+    onError: () => {
       setToast({ message: 'Failed to approve recruiter', type: 'error' });
-    }
-  };
+    },
+  });
 
-  const handleBlock = async (userId) => {
-    try {
-      await userAPI.blockUser(userId);
-      setUsers(users.map((user) => (user._id === userId ? { ...user, blocked: true } : user)));
+  const blockMutation = useMutation({
+    mutationFn: (userId) => userAPI.blockUser(userId),
+    onSuccess: (_, userId) => {
+      queryClient.setQueryData(['adminUsers'], (old) =>
+        old ? old.map((u) => (u._id === userId ? { ...u, blocked: true } : u)) : []
+      );
       setToast({ message: 'User blocked successfully', type: 'success' });
       setSelectedUser(null);
-    } catch (error) {
+    },
+    onError: () => {
       setToast({ message: 'Failed to block user', type: 'error' });
-    }
-  };
+    },
+  });
+
+  const handleApprove = (userId) => approveMutation.mutate(userId);
+  const handleBlock = (userId) => blockMutation.mutate(userId);
 
   const handleResetPassword = async () => {
     if (!selectedUser?._id) return;
@@ -81,7 +80,7 @@ const Users = () => {
       ? users.filter((user) => user.role === 'recruiter')
       : users.filter((user) => user.role === 'recruiter' && !user.approved);
 
-  if (loading) {
+  if (isLoading) {
     return <Loader fullScreen />;
   }
 
@@ -387,19 +386,21 @@ const Users = () => {
               {selectedUser.role === 'recruiter' && !selectedUser.approved && !selectedUser.blocked && (
                 <button
                   onClick={() => handleApprove(selectedUser._id)}
-                  className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors"
+                  disabled={approveMutation.isPending}
+                  className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:opacity-50"
                 >
                   <CheckCircle className="w-5 h-5" />
-                  Approve Recruiter
+                  {approveMutation.isPending ? 'Approving...' : 'Approve Recruiter'}
                 </button>
               )}
               {!selectedUser.blocked && (
                 <button
                   onClick={() => handleBlock(selectedUser._id)}
-                  className="flex items-center gap-2 px-6 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors"
+                  disabled={blockMutation.isPending}
+                  className="flex items-center gap-2 px-6 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors disabled:opacity-50"
                 >
                   <XCircle className="w-5 h-5" />
-                  Block User
+                  {blockMutation.isPending ? 'Blocking...' : 'Block User'}
                 </button>
               )}
             </div>

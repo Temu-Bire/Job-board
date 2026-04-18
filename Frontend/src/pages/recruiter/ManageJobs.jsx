@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
 import { jobAPI } from '../../utils/api';
 import Sidebar from '../../components/Sidebar';
@@ -10,10 +11,9 @@ import { Edit, Trash2, Users } from 'lucide-react';
 
 const ManageJobs = () => {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const userId = user?.id || user?._id;
   const recruiterNotApproved = user?.role === 'recruiter' && user?.approved === false;
-  const [jobs, setJobs] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   // Delete modal state
   const [deleteModal, setDeleteModal] = useState(null);
@@ -58,41 +58,26 @@ const ManageJobs = () => {
     }));
   };
 
-  useEffect(() => {
-    if (recruiterNotApproved) {
-      setLoading(false);
-      return;
-    }
-    fetchJobs();
-  }, []);
+  const { data: jobs = [], isLoading } = useQuery({
+    queryKey: ['manageJobs'],
+    queryFn: () => jobAPI.getRecruiterJobs(),
+    enabled: !!userId && !recruiterNotApproved,
+  });
 
-  const fetchJobs = async () => {
-    try {
-      if (!userId) throw new Error('Please log in again');
-      const data = await jobAPI.getRecruiterJobs();
-      setJobs(data);
-    } catch (error) {
-      console.error('Error fetching jobs:', error);
-      const msg = error?.message || error?.data?.message || 'Failed to load jobs';
-      setToast({ message: msg, type: 'error' });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Delete Job
-  const handleDelete = async () => {
-    setDeleting(true);
-    try {
-      await jobAPI.deleteJob(deleteModal._id || deleteModal.id);
-      setJobs(jobs.filter((job) => (job._id || job.id) !== (deleteModal._id || deleteModal.id)));
+  const deleteMutation = useMutation({
+    mutationFn: (jobId) => jobAPI.deleteJob(jobId),
+    onSuccess: (_, jobId) => {
+      queryClient.setQueryData(['manageJobs'], (old) => old ? old.filter((job) => (job._id || job.id) !== jobId) : []);
       setToast({ message: 'Job deleted successfully', type: 'success' });
       setDeleteModal(null);
-    } catch (error) {
+    },
+    onError: () => {
       setToast({ message: 'Failed to delete job', type: 'error' });
-    } finally {
-      setDeleting(false);
     }
+  });
+
+  const handleDelete = () => {
+    deleteMutation.mutate(deleteModal._id || deleteModal.id);
   };
 
   // Open Edit Modal
@@ -122,30 +107,33 @@ const ManageJobs = () => {
     setEditForm({ ...editForm, [e.target.name]: e.target.value });
   };
 
-  // Submit Job Update
-  const handleUpdate = async () => {
-    setUpdating(true);
-    try {
-      const jobId = editModal?._id || editModal?.id;
-      if (!jobId) throw new Error('Invalid job');
-
-      if (!Array.isArray(editForm.requirements) || editForm.requirements.length === 0) {
-        throw new Error('Please add at least one requirement');
-      }
-
-      const updatedJob = await jobAPI.updateJob(jobId, editForm);
-      setJobs(jobs.map((job) => ((job._id || job.id) === jobId ? updatedJob : job)));
+  const updateMutation = useMutation({
+    mutationFn: ({ jobId, editData }) => jobAPI.updateJob(jobId, editData),
+    onSuccess: (updatedJob, { jobId }) => {
+      queryClient.setQueryData(['manageJobs'], (old) => old ? old.map((job) => ((job._id || job.id) === jobId ? updatedJob : job)) : []);
       setToast({ message: 'Job updated successfully', type: 'success' });
       setEditModal(null);
-    } catch (error) {
+    },
+    onError: (error) => {
       const msg = error?.message || error?.data?.message || 'Failed to update job';
       setToast({ message: msg, type: 'error' });
-    } finally {
-      setUpdating(false);
     }
+  });
+
+  const handleUpdate = () => {
+    const jobId = editModal?._id || editModal?.id;
+    if (!jobId) {
+      setToast({ message: 'Invalid job', type: 'error' });
+      return;
+    }
+    if (!Array.isArray(editForm.requirements) || editForm.requirements.length === 0) {
+      setToast({ message: 'Please add at least one requirement', type: 'error' });
+      return;
+    }
+    updateMutation.mutate({ jobId, editData: editForm });
   };
 
-  if (loading) {
+  if (isLoading && !recruiterNotApproved) {
     return <Loader fullScreen />;
   }
 
@@ -279,10 +267,10 @@ const ManageJobs = () => {
             </button>
             <button
               onClick={handleDelete}
-              disabled={deleting}
+              disabled={deleteMutation.isPending}
               className="px-6 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors disabled:bg-red-400"
             >
-              {deleting ? 'Deleting...' : 'Delete'}
+              {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
             </button>
           </div>
         </div>
@@ -421,10 +409,10 @@ const ManageJobs = () => {
                 </button>
                 <button
                   onClick={handleUpdate}
-                  disabled={updating}
+                  disabled={updateMutation.isPending}
                   className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:bg-blue-400"
                 >
-                  {updating ? 'Updating...' : 'Update Job'}
+                  {updateMutation.isPending ? 'Updating...' : 'Update Job'}
                 </button>
               </div>
             </>
