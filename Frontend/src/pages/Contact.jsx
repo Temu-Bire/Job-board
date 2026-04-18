@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Mail, Phone, MapPin, Send } from 'lucide-react';
 import Toast from '../components/Toast';
+import { contactAPI } from '../utils/api';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -20,14 +21,22 @@ const Contact = () => {
     e.preventDefault();
     setLoading(true);
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      await contactAPI.submitContactForm(formData);
 
-    setToast({
-      message: 'Message sent successfully! We will get back to you soon.',
-      type: 'success',
-    });
-    setFormData({ name: '', email: '', subject: '', message: '' });
-    setLoading(false);
+      setToast({
+        message: 'Message sent successfully! We will get back to you soon.',
+        type: 'success',
+      });
+      setFormData({ name: '', email: '', subject: '', message: '' });
+    } catch (error) {
+      setToast({
+        message: error.message || 'Failed to send message. Please try again later.',
+        type: 'error',
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -62,8 +71,7 @@ const Contact = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-800 mb-1">Email</h3>
-                    <p className="text-gray-600">support@careerconnect.com</p>
-                    <p className="text-gray-600">hello@careerconnect.com</p>
+                    <p className="text-gray-600">temesgenf2a@gmail.com</p>
                   </div>
                 </div>
 
@@ -73,8 +81,8 @@ const Contact = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-800 mb-1">Phone</h3>
-                    <p className="text-gray-600">+1 (555) 123-4567</p>
-                    <p className="text-gray-600">Mon-Fri, 9am-6pm EST</p>
+                    <p className="text-gray-600">+251 912 34 56 78</p>
+                    <p className="text-gray-600">24/7</p>
                   </div>
                 </div>
 
@@ -84,8 +92,8 @@ const Contact = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-800 mb-1">Office</h3>
-                    <p className="text-gray-600">123 Career Street</p>
-                    <p className="text-gray-600">San Francisco, CA 94102</p>
+                    <p className="text-gray-600">debre birhan university</p>
+                    <p className="text-gray-600">debre birhan, Ethiopia</p>
                   </div>
                 </div>
               </div>
@@ -95,9 +103,6 @@ const Contact = () => {
                 <p className="text-gray-700 text-sm mb-4">
                   Check out our FAQ section or browse through our help documentation
                 </p>
-                <button className="text-blue-600 font-semibold hover:text-blue-700">
-                  Visit Help Center →
-                </button>
               </div>
             </div>
 
@@ -118,7 +123,7 @@ const Contact = () => {
                         onChange={handleChange}
                         required
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="John Doe"
+                        placeholder="Enter your name"
                       />
                     </div>
 
@@ -133,7 +138,7 @@ const Contact = () => {
                         onChange={handleChange}
                         required
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="you@example.com"
+                        placeholder="Enter your email"
                       />
                     </div>
                   </div>
@@ -149,7 +154,7 @@ const Contact = () => {
                       onChange={handleChange}
                       required
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="How can we help you?"
+                      placeholder="Enter your subject"
                     />
                   </div>
 
@@ -164,7 +169,7 @@ const Contact = () => {
                       required
                       rows="6"
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Tell us more about your inquiry..."
+                      placeholder="Enter your message"
                     />
                   </div>
 

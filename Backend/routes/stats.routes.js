@@ -6,6 +6,23 @@ import { protect } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
 
+router.get('/public', async (req, res) => {
+  try {
+    const [totalJobseekers, totalCompanies, totalPlacements] = await Promise.all([
+      User.countDocuments({ role: 'jobseeker' }),
+      User.countDocuments({ role: 'recruiter' }),
+      Application.countDocuments({ status: 'accepted' })
+    ]);
+    res.json({
+      jobseekers: totalJobseekers,
+      companies: totalCompanies,
+      placements: totalPlacements
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 router.get('/admin', async (req, res) => {
   try {
     const now = new Date();

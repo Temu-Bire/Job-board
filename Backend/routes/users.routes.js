@@ -9,11 +9,15 @@ import {
   updateJobseekerProfile,
   approveRecruiter,
   blockUser,
+  resetUserPassword,
   uploadJobseekerAvatar,
   uploadJobseekerResume,
   getSavedJobs,
 } from '../controllers/users.controller.js';
 import { protect, admin } from '../middleware/auth.middleware.js';
+import { validate, objectIdSchema } from '../middleware/validate.middleware.js';
+import { resetPasswordSchema } from '../validators/users.validators.js';
+import { z } from 'zod';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -62,6 +66,13 @@ router.put('/:id', protect, updateUserBasic);
 router.put('/:id/jobseeker-profile', protect, updateJobseekerProfile);
 router.put('/:id/approve', protect, admin, approveRecruiter);
 router.put('/:id/block', protect, admin, blockUser);
+router.put(
+  '/:id/reset-password',
+  protect,
+  admin,
+  validate({ params: z.object({ id: objectIdSchema }), body: resetPasswordSchema }),
+  resetUserPassword
+);
 
 router.post('/:id/jobseeker-profile/avatar', protect, uploadAvatar.single('avatar'), uploadJobseekerAvatar);
 router.post('/:id/jobseeker-profile/resume', protect, uploadResume.single('resume'), uploadJobseekerResume);

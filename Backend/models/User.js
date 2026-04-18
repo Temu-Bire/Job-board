@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 
 const userSchema = mongoose.Schema(
   {
@@ -65,6 +66,9 @@ const userSchema = mongoose.Schema(
 
     // Job bookmarking for jobseekers
     savedJobs: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Job' }],
+
+    resetPasswordTokenHash: { type: String, default: null },
+    resetPasswordExpiresAt: { type: Date, default: null },
   },
   {
     timestamps: true,
@@ -85,6 +89,14 @@ userSchema.pre('save', async function (next) {
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
 });
+
+userSchema.methods.createPasswordResetToken = function () {
+  const rawToken = crypto.randomBytes(32).toString('hex');
+  const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+  this.resetPasswordTokenHash = tokenHash;
+  this.resetPasswordExpiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+  return rawToken;
+};
 
 const User = mongoose.model('User', userSchema);
 

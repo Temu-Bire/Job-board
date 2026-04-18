@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// In dev, Vite proxy serves /api → backend.
-// In production, set VITE_API_BASE_URL to your backend URL + /api (e.g. https://my-backend.onrender.com/api)
+// In dev, Vite proxy serves /api -> backend.
+// In production, set VITE_API_BASE_URL to your backend URL + /api
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 const api = axios.create({
@@ -42,6 +42,16 @@ export const authAPI = {
 
   register: async (userData) => {
     const response = await api.post('/auth/register', userData);
+    return response;
+  },
+
+  forgotPassword: async (email) => {
+    const response = await api.post('/auth/forgot-password', { email });
+    return response;
+  },
+
+  resetPassword: async (token, password) => {
+    const response = await api.post('/auth/reset-password', { token, password });
     return response;
   },
 
@@ -149,6 +159,11 @@ export const userAPI = {
     return response;
   },
 
+  resetPassword: async (userId, password) => {
+    const response = await api.put(`/users/${userId}/reset-password`, { password });
+    return response;
+  },
+
   getSavedJobs: async () => {
     const response = await api.get('/users/saved-jobs');
     return response;
@@ -157,6 +172,11 @@ export const userAPI = {
 
 
 export const statsAPI = {
+  getPublicStats: async () => {
+    const response = await api.get('/stats/public');
+    return response;
+  },
+
   getAdminStats: async () => {
     const response = await api.get('/stats/admin');
     return response;
@@ -190,6 +210,13 @@ export const messageAPI = {
     const response = await api.post(`/messages/${userId}`, { message });
     return response;
   },
+};
+
+export const contactAPI = {
+  submitContactForm: async (data) => {
+    const response = await api.post('/contact', data);
+    return response;
+  }
 };
 
 export default api;

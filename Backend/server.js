@@ -10,6 +10,7 @@ import notificationRoutes from './routes/notifications.routes.js';
 import statsRoutes from './routes/stats.routes.js';
 import userRoutes from './routes/users.routes.js';
 import messageRoutes from './routes/messages.routes.js';
+import contactRoutes from './routes/contact.routes.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
@@ -61,6 +62,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/contact', contactRoutes);
 
 // Serve Frontend
 if (process.env.NODE_ENV === 'production') {

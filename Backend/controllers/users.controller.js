@@ -128,6 +128,30 @@ export const blockUser = async (req, res) => {
   }
 };
 
+// @desc    Admin reset a user's password
+// @route   PUT /api/users/:id/reset-password
+// @access  Private/Admin
+export const resetUserPassword = async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    const { id } = req.params;
+    const { password } = req.body;
+
+    const user = await User.findById(id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    user.password = password;
+    await user.save(); // hashes via pre('save')
+
+    res.json({ success: true });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
 export const uploadJobseekerAvatar = async (req, res) => {
   try {
     ensureUploadsDir();

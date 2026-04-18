@@ -1,6 +1,8 @@
 import User from '../models/User.js';
 import Notification from '../models/Notification.js';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
+import { sendEmail } from '../utils/email.js';
 
 // Generate JWT
 const generateToken = (id) => {
@@ -137,6 +139,87 @@ export const getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('-password');
     res.json(user);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// @desc    Request password reset (email link)
+// @route   POST /api/auth/forgot-password
+// @access  Public
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+
+    const user = await User.findOne({ email: normalizedEmail });
+
+    // Always respond with success to prevent user enumeration
+    if (!user) {
+      return res.json({ success: true, message: 'If the email exists, a reset link has been sent.' });
+    }
+
+    const rawToken = user.createPasswordResetToken();
+    await user.save();
+
+    const frontendBase = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const resetUrl = `${frontendBase}/reset-password?token=${encodeURIComponent(rawToken)}`;
+
+    const subject = 'Reset your CareerConnect password';
+    const text = `You requested a password reset.\n\nReset link: ${resetUrl}\n\nThis link expires in 1 hour. If you didn't request this, you can ignore this email.`;
+    const html = `
+      <p>You requested a password reset.</p>
+      <p><a href="${resetUrl}">Click here to reset your password</a></p>
+      <p>This link expires in 1 hour. If you didn't request this, you can ignore this email.</p>
+    `;
+
+    const sent = await sendEmail({ to: user.email, subject, text, html });
+
+    if (sent?.skipped) {
+      // Helpful for local/dev when SMTP isn't configured
+      // eslint-disable-next-line no-console
+      console.log(`[forgot-password] SMTP not configured. Reset URL for ${user.email}: ${resetUrl}`);
+    }
+
+    return res.json({ success: true, message: 'If the email exists, a reset link has been sent.' });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// @desc    Reset password using token
+// @route   POST /api/auth/reset-password
+// @access  Public
+export const resetPassword = async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    const tokenHash = crypto.createHash('sha256').update(String(token)).digest('hex');
+
+    const user = await User.findOne({
+      resetPasswordTokenHash: tokenHash,
+      resetPasswordExpiresAt: { $gt: new Date() },
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: 'Reset token is invalid or has expired' });
+    }
+
+    user.password = password;
+    user.resetPasswordTokenHash = null;
+    user.resetPasswordExpiresAt = null;
+    await user.save();
+
+    // Auto-login after reset
+    return res.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      approved: user.approved,
+      blocked: user.blocked,
+      profile: user.profile,
+      token: generateToken(user._id),
+    });
   } catch (error) {
     res.status(400).json({ message: error.message });
   }

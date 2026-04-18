@@ -1,7 +1,26 @@
 import { Target, Users, Zap, Shield } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { statsAPI } from '../utils/api';
 
 const About = () => {
+  const [stats, setStats] = useState({ jobseekers: 10000, companies: 500, placements: 5000 });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const data = await statsAPI.getPublicStats();
+        setStats({
+          jobseekers: data.jobseekers > 0 ? data.jobseekers : 10000,
+          companies: data.companies > 0 ? data.companies : 500,
+          placements: data.placements > 0 ? data.placements : 5000,
+        });
+      } catch (error) {
+        console.error("Failed to fetch public stats", error);
+      }
+    };
+    fetchStats();
+  }, []);
   const values = [
     {
       icon: Target,
@@ -46,7 +65,7 @@ const About = () => {
               <h2 className="text-4xl font-bold text-gray-800 mb-6">Our Story</h2>
               <div className="space-y-4 text-lg text-gray-700">
                 <p>
-                  Founded in 2024, CareerConnect was born from a simple observation: jobseekers and
+                  Founded in 2025, CareerConnect was born from a simple observation: jobseekers and
                   recent graduates struggle to find relevant internships and entry-level positions,
                   while companies struggle to connect with qualified young talent.
                 </p>
@@ -64,15 +83,15 @@ const About = () => {
             <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-12">
               <div className="space-y-8">
                 <div>
-                  <div className="text-5xl font-bold text-blue-600 mb-2">10,000+</div>
+                  <div className="text-5xl font-bold text-blue-600 mb-2">{stats.jobseekers.toLocaleString()}+</div>
                   <p className="text-gray-700 font-semibold">Active Jobseekers</p>
                 </div>
                 <div>
-                  <div className="text-5xl font-bold text-blue-600 mb-2">500+</div>
+                  <div className="text-5xl font-bold text-blue-600 mb-2">{stats.companies.toLocaleString()}+</div>
                   <p className="text-gray-700 font-semibold">Partner Companies</p>
                 </div>
                 <div>
-                  <div className="text-5xl font-bold text-blue-600 mb-2">5,000+</div>
+                  <div className="text-5xl font-bold text-blue-600 mb-2">{stats.placements.toLocaleString()}+</div>
                   <p className="text-gray-700 font-semibold">Successful Placements</p>
                 </div>
               </div>

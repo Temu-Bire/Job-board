@@ -12,6 +12,8 @@ const Users = () => {
   const [filter, setFilter] = useState('all');
   const [selectedUser, setSelectedUser] = useState(null);
   const [toast, setToast] = useState(null);
+  const [resetPasswordValue, setResetPasswordValue] = useState('');
+  const [resettingPassword, setResettingPassword] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -48,6 +50,25 @@ const Users = () => {
       setSelectedUser(null);
     } catch (error) {
       setToast({ message: 'Failed to block user', type: 'error' });
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!selectedUser?._id) return;
+    if (!resetPasswordValue || resetPasswordValue.length < 6) {
+      setToast({ message: 'Password must be at least 6 characters', type: 'error' });
+      return;
+    }
+
+    setResettingPassword(true);
+    try {
+      await userAPI.resetPassword(selectedUser._id, resetPasswordValue);
+      setToast({ message: 'Password updated successfully', type: 'success' });
+      setResetPasswordValue('');
+    } catch (error) {
+      setToast({ message: error?.message || 'Failed to update password', type: 'error' });
+    } finally {
+      setResettingPassword(false);
     }
   };
 
@@ -204,7 +225,10 @@ const Users = () => {
 
       <Modal
         isOpen={!!selectedUser}
-        onClose={() => setSelectedUser(null)}
+        onClose={() => {
+          setSelectedUser(null);
+          setResetPasswordValue('');
+        }}
         title="User Details"
         size="lg"
       >
@@ -329,6 +353,35 @@ const Users = () => {
                 </div>
               </div>
             )}
+
+            <div className="border-t pt-4 space-y-3">
+              <h4 className="font-semibold text-gray-800 dark:text-gray-200">Reset Password</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    New password
+                  </label>
+                  <input
+                    type="password"
+                    value={resetPasswordValue}
+                    onChange={(e) => setResetPasswordValue(e.target.value)}
+                    placeholder="Enter a new password (min 6 chars)"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleResetPassword}
+                  disabled={resettingPassword}
+                  className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:bg-blue-400"
+                >
+                  {resettingPassword ? 'Updating...' : 'Update Password'}
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                This will immediately replace the user’s password.
+              </p>
+            </div>
 
             <div className="flex justify-end gap-4 border-t pt-4">
               {selectedUser.role === 'recruiter' && !selectedUser.approved && !selectedUser.blocked && (

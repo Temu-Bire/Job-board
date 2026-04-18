@@ -11,6 +11,8 @@ import NotFound from '../pages/NotFound';
 
 import Login from '../pages/auth/Login';
 import Register from '../pages/auth/Register';
+import ForgotPassword from '../pages/auth/ForgotPassword';
+import ResetPassword from '../pages/auth/ResetPassword';
 
 import StudentDashboard from '../pages/student/Dashboard';
 import StudentProfile from '../pages/student/Profile';
@@ -18,6 +20,7 @@ import StudentJobSearch from '../pages/student/JobSearch';
 import StudentAppliedJobs from '../pages/student/AppliedJobs';
 import Chat from '../pages/chat/Chat';
 import StudentSavedJobs from '../pages/student/SavedJobs';
+import JobseekerManageProfile from '../pages/jobseeker/ManageProfile';
 
 import RecruiterDashboard from '../pages/recruiter/Dashboard';
 import RecruiterPostJob from '../pages/recruiter/PostJob';
@@ -59,6 +62,8 @@ const AppRoutes = () => {
           path="/login"
           element={user ? <Navigate to={getDefaultRoute()} replace /> : <Login />}
         />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route
           path="/register"
           element={user ? <Navigate to={getDefaultRoute()} replace /> : <Register />}
@@ -75,8 +80,14 @@ const AppRoutes = () => {
         <Route
           path="/jobseeker/profile"
           element={
+            <Navigate to="/jobseeker/manage-profile" replace />
+          }
+        />
+        <Route
+          path="/jobseeker/manage-profile"
+          element={
             <ProtectedRoute allowedRoles={['jobseeker']}>
-              <StudentProfile />
+              <JobseekerManageProfile />
             </ProtectedRoute>
           }
         />

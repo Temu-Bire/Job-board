@@ -141,7 +141,7 @@ return (
                 </button>
                 <NotificationBell />
                 <Link
-                  to={user.role === 'jobseeker' ? '/jobseeker/profile' : '#'}
+                  to={user.role === 'jobseeker' ? '/jobseeker/manage-profile' : '#'}
                   className="flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-blue-600"
                 >
                   <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
@@ -245,11 +245,11 @@ return (
                     Applications
                   </Link>
                   <Link
-                    to="/jobseeker/profile"
+                    to="/jobseeker/manage-profile"
                     className="block text-gray-700 dark:text-gray-300 hover:text-blue-600 font-medium py-2"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    Profile
+                    Manage Profile
                   </Link>
                 </>
               )}

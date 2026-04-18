@@ -27,23 +27,23 @@ const Home = () => {
 
   const testimonials = [
     {
-      name: 'Sarah Johnson',
+      name: 'Abebe Kebede',
       role: 'Software Engineer',
-      company: 'TechCorp',
+      company: 'Emare Ict Hub',
       quote:
         'CareerConnect helped me land my dream internship! The platform is easy to use and the opportunities are genuine.',
     },
     {
-      name: 'Michael Chen',
+      name: 'Hanna Getachew',
       role: 'Data Analyst',
-      company: 'DataMinds',
+      company: 'Addis Ababa Technology',
       quote:
         'As a recruiter, this platform has made finding qualified candidates so much easier. Highly recommend!',
     },
     {
-      name: 'Emily Davis',
+      name: 'Fasika Kebede',
       role: 'UX Designer',
-      company: 'DesignHub',
+      company: 'Ethio Telecom',
       quote:
         'The application process is straightforward, and I love how I can track all my applications in one place.',
     },
@@ -57,7 +57,7 @@ const Home = () => {
             <h1 className="text-5xl md:text-6xl font-bold mb-6">
               Connect Your Future with CareerConnect
             </h1>
-              <p className="text-xl md:text-2xl mb-8 text-blue-100">
+            <p className="text-xl md:text-2xl mb-8 text-blue-100">
               The premier platform connecting jobseekers with internships and career opportunities
             </p>
             <div className="flex gap-4 justify-center">

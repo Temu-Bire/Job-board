@@ -123,6 +123,12 @@ const Login = () => {
           </button>
         </form>
 
+        <div className="mt-4 text-center">
+          <Link to="/forgot-password" className="text-blue-600 font-semibold hover:text-blue-700">
+            Forgot password?
+          </Link>
+        </div>
+
         <div className="mt-6 text-center">
           <p className="text-gray-600 dark:text-gray-300">
             Don't have an account?{' '}
@@ -130,15 +136,6 @@ const Login = () => {
               Register here
             </Link>
           </p>
-        </div>
-
-        <div className="mt-6 p-4 bg-blue-50 dark:bg-gray-700 rounded-lg">
-          <p className="text-sm text-gray-700 dark:text-gray-300 font-medium mb-2">Demo Accounts:</p>
-          <div className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
-            <p>Jobseeker: jobseeker@test.com / password123</p>
-            <p>Recruiter: recruiter@test.com / password123</p>
-            <p>Admin: admin@test.com / password123</p>
-          </div>
         </div>
       </div>
     </div>

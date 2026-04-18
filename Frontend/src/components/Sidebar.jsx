@@ -13,7 +13,7 @@ const Sidebar = () => {
     { path: '/jobseeker/jobs', label: 'Find Jobs', icon: Briefcase },
     { path: '/jobseeker/applied', label: 'Applications', icon: FileText },
     { path: '/jobseeker/saved', label: 'Saved Jobs', icon: Bookmark },
-    { path: '/jobseeker/profile', label: 'Profile', icon: User },
+    { path: '/jobseeker/manage-profile', label: 'Manage Profile', icon: User },
   ];
 
   const recruiterLinks = [
