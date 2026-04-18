@@ -2,8 +2,8 @@ import { z } from 'zod';
 
 export const jobCreateSchema = z.object({
   title: z.string().min(2).max(150),
-  company: z.string().min(2).max(150),
-  location: z.string().min(2).max(150),
+  company: z.string().min(2).max(150).optional(),
+  location: z.string().min(2).max(150).optional(),
   type: z.string().min(2).max(60),
   category: z.string().max(120).optional(),
   description: z.string().min(10).max(5000),

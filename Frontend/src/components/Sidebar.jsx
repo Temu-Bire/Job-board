@@ -22,11 +22,13 @@ const Sidebar = () => {
     { path: '/recruiter/post-job', label: 'Post Job', icon: PlusCircle },
     { path: '/recruiter/jobs', label: 'Manage Jobs', icon: Briefcase },
     { path: '/chat', label: 'Messages', icon: MessageSquare },
+    { path: '/recruiter/manage-profile', label: 'Manage Profile', icon: User },
   ];
 
   const adminLinks = [
     { path: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/admin/users', label: 'Manage Users', icon: Users },
+    { path: '/admin/manage-account', label: 'Manage Account', icon: User },
   ];
 
   const getLinks = () => {

@@ -59,6 +59,11 @@ export const authAPI = {
     const response = await api.post('/auth/logout');
     return response;
   },
+
+  googleAuth: async (token, role) => {
+    const response = await api.post('/auth/google', { token, role });
+    return response;
+  },
 };
 
 
@@ -166,6 +171,30 @@ export const userAPI = {
 
   getSavedJobs: async () => {
     const response = await api.get('/users/saved-jobs');
+    return response;
+  },
+
+  updateRecruiterProfile: async (userId, profileData) => {
+    const response = await api.put(`/users/${userId}/recruiter-profile`, profileData);
+    return response;
+  },
+
+  uploadRecruiterLogo: async (userId, file) => {
+    const formData = new FormData();
+    formData.append('logo', file);
+    const response = await api.post(`/users/${userId}/recruiter-profile/logo`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response;
+  },
+
+  createAdmin: async (adminData) => {
+    const response = await api.post('/users/admin', adminData);
+    return response;
+  },
+
+  updatePassword: async (userId, passwordData) => {
+    const response = await api.put(`/users/${userId}/password`, passwordData);
     return response;
   },
 };

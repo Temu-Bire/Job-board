@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { authAPI } from '../../utils/api';
+import { GoogleLogin } from '@react-oauth/google';
 import { LogIn, Mail, Lock, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 const Login = () => {
@@ -68,6 +69,40 @@ const Login = () => {
             <p className="text-red-700 text-sm">{error}</p>
           </div>
         )}
+
+        <div className="mb-6 flex flex-col items-center">
+          <GoogleLogin
+            onSuccess={async (credentialResponse) => {
+              setLoading(true);
+              setError('');
+              try {
+                const response = await authAPI.googleAuth(credentialResponse.credential);
+                const authData = response;
+                login(authData);
+
+                switch (authData.role) {
+                  case 'jobseeker': navigate('/jobseeker/dashboard'); break;
+                  case 'recruiter': navigate('/recruiter/dashboard'); break;
+                  case 'admin': navigate('/admin/dashboard'); break;
+                  default: navigate('/');
+                }
+              } catch (err) {
+                setError(err.message || 'Google Login failed. Please try again.');
+              } finally {
+                setLoading(false);
+              }
+            }}
+            onError={() => {
+              setError('Google Login Failed');
+            }}
+          />
+        </div>
+
+        <div className="flex items-center gap-4 mb-6">
+          <hr className="flex-1 border-gray-300 dark:border-gray-600" />
+          <span className="text-gray-500 dark:text-gray-400 text-sm">or sign in with email</span>
+          <hr className="flex-1 border-gray-300 dark:border-gray-600" />
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>

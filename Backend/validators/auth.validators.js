@@ -30,3 +30,8 @@ export const resetPasswordSchema = z.object({
   password: z.string().min(6).max(128),
 });
 
+export const googleAuthSchema = z.object({
+  token: z.string(),
+  role: z.enum(['jobseeker', 'recruiter']).optional(),
+});
+

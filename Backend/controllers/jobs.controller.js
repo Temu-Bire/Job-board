@@ -113,8 +113,6 @@ export const createJob = async (req, res) => {
   try {
     const {
       title,
-      company,
-      location,
       type,
       category,
       description,
@@ -125,26 +123,29 @@ export const createJob = async (req, res) => {
       applicationStart,
       applicationEnd,
       contactEmail,
-      contactWebsite,
       status,
     } = req.body;
+
+    const companyName = req.user.company || req.user.profile?.companyName || 'Unknown Company';
+    const companyLocation = req.user.profile?.location || 'Remote';
+    const companyWebsite = req.user.website || req.user.profile?.website || '';
 
     const job = new Job({
       recruiterId: req.user._id,
       title,
-      company,
-      location,
+      company: companyName,
+      location: companyLocation,
       type,
       category,
       description,
       requirements,
-      salaryMin,
-      salaryMax,
-      openings,
-      applicationStart,
-      applicationEnd,
+      salaryMin: salaryMin === '' ? null : salaryMin,
+      salaryMax: salaryMax === '' ? null : salaryMax,
+      openings: openings === '' ? 1 : openings,
+      applicationStart: applicationStart === '' ? null : applicationStart,
+      applicationEnd: applicationEnd === '' ? null : applicationEnd,
       contactEmail,
-      contactWebsite,
+      contactWebsite: companyWebsite,
       status,
     });
 
@@ -194,19 +195,19 @@ export const updateJob = async (req, res) => {
       }
 
       job.title = req.body.title || job.title;
-      job.company = req.body.company || job.company;
-      job.location = req.body.location || job.location;
+      job.company = req.user.company || req.user.profile?.companyName || job.company;
+      job.location = req.user.profile?.location || job.location;
       job.type = req.body.type || job.type;
       job.category = req.body.category ?? job.category;
       job.description = req.body.description || job.description;
       job.requirements = req.body.requirements || job.requirements;
-      job.salaryMin = req.body.salaryMin ?? job.salaryMin;
-      job.salaryMax = req.body.salaryMax ?? job.salaryMax;
-      job.openings = req.body.openings ?? job.openings;
-      job.applicationStart = req.body.applicationStart ?? job.applicationStart;
-      job.applicationEnd = req.body.applicationEnd ?? job.applicationEnd;
+      job.salaryMin = req.body.salaryMin === '' ? null : (req.body.salaryMin ?? job.salaryMin);
+      job.salaryMax = req.body.salaryMax === '' ? null : (req.body.salaryMax ?? job.salaryMax);
+      job.openings = req.body.openings === '' ? 1 : (req.body.openings ?? job.openings);
+      job.applicationStart = req.body.applicationStart === '' ? null : (req.body.applicationStart ?? job.applicationStart);
+      job.applicationEnd = req.body.applicationEnd === '' ? null : (req.body.applicationEnd ?? job.applicationEnd);
       job.contactEmail = req.body.contactEmail ?? job.contactEmail;
-      job.contactWebsite = req.body.contactWebsite ?? job.contactWebsite;
+      job.contactWebsite = req.user.website || req.user.profile?.website || job.contactWebsite;
       job.status = req.body.status ?? job.status;
 
       const updatedJob = await job.save();

@@ -13,6 +13,10 @@ import {
   uploadJobseekerAvatar,
   uploadJobseekerResume,
   getSavedJobs,
+  updateRecruiterProfile,
+  uploadRecruiterLogo,
+  createAdminUser,
+  updatePassword
 } from '../controllers/users.controller.js';
 import { protect, admin } from '../middleware/auth.middleware.js';
 import { validate, objectIdSchema } from '../middleware/validate.middleware.js';
@@ -58,6 +62,7 @@ const resumeFileFilter = (req, file, cb) => {
 
 const uploadAvatar = multer({ storage, limits: { fileSize: MAX_AVATAR_BYTES }, fileFilter: imageFileFilter });
 const uploadResume = multer({ storage, limits: { fileSize: MAX_RESUME_BYTES }, fileFilter: resumeFileFilter });
+const uploadLogo = multer({ storage, limits: { fileSize: MAX_AVATAR_BYTES }, fileFilter: imageFileFilter });
 
 const router = express.Router();
 
@@ -76,6 +81,16 @@ router.put(
 
 router.post('/:id/jobseeker-profile/avatar', protect, uploadAvatar.single('avatar'), uploadJobseekerAvatar);
 router.post('/:id/jobseeker-profile/resume', protect, uploadResume.single('resume'), uploadJobseekerResume);
+
+// Recruiter Profile
+router.put('/:id/recruiter-profile', protect, updateRecruiterProfile);
+router.post('/:id/recruiter-profile/logo', protect, uploadLogo.single('logo'), uploadRecruiterLogo);
+
+// Password Update
+router.put('/:id/password', protect, updatePassword);
+
+// Admin Account Creation
+router.post('/admin', protect, admin, createAdminUser);
 
 // Saved jobs for current jobseeker
 router.get('/saved-jobs', protect, getSavedJobs);

@@ -11,6 +11,7 @@ import { MessageSquare, User, Clock } from 'lucide-react';
 const Inbox = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [toast, setToast] = useState(null);
   const { data: conversations = [], isLoading } = useQuery({
     queryKey: ['conversations'],
     queryFn: () => messageAPI.getConversations(),

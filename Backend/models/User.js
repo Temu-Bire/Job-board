@@ -56,6 +56,7 @@ const userSchema = mongoose.Schema(
       resumeUrl: String,
       logoUrl: String, // For recruiters
       companyName: String, // For recruiters
+      location: String,
       university: String,
       degree: String,
       graduationYear: Number,

@@ -3,6 +3,9 @@ import Notification from '../models/Notification.js';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { sendEmail } from '../utils/email.js';
+import { OAuth2Client } from 'google-auth-library';
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Generate JWT
 const generateToken = (id) => {
@@ -222,5 +225,79 @@ export const resetPassword = async (req, res) => {
     });
   } catch (error) {
     res.status(400).json({ message: error.message });
+  }
+};
+
+// @desc    Authenticate with Google
+// @route   POST /api/auth/google
+// @access  Public
+export const googleAuth = async (req, res) => {
+  try {
+    const { token, role } = req.body;
+
+    // Verify token with google
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    const email = payload.email;
+    const name = payload.name;
+    const avatarUrl = payload.picture;
+
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      // Register logic
+      const assignedRole = role || 'jobseeker';
+      user = await User.create({
+        name,
+        email,
+        password: crypto.randomBytes(20).toString('hex'), // random password for OAuth users
+        role: assignedRole,
+        approved: assignedRole === 'recruiter' ? false : true,
+        blocked: false,
+        avatarUrl,
+        profile: {
+          avatarUrl
+        }
+      });
+
+      // Notify admins
+      const admins = await User.find({ role: 'admin', blocked: { $ne: true } }).select('_id');
+      if (admins.length > 0) {
+        const notifications = admins.map((a) => ({
+          userId: a._id,
+          type: 'new_user_registered',
+          message: `New user registered via Google: ${user.name} (${user.email}).`,
+        }));
+        await Notification.insertMany(notifications);
+      }
+    }
+
+    // Login user (whether just created or existing)
+    res.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      approved: user.approved,
+      blocked: user.blocked,
+      university: user.university,
+      degree: user.degree,
+      graduationYear: user.graduationYear,
+      company: user.company,
+      companyDescription: user.companyDescription,
+      website: user.website,
+      avatarUrl: user.avatarUrl,
+      resumeUrl: user.resumeUrl,
+      githubUrl: user.githubUrl,
+      linkedinUrl: user.linkedinUrl,
+      profile: user.profile,
+      token: generateToken(user._id),
+    });
+  } catch (error) {
+    console.error('Google Auth Error:', error);
+    res.status(401).json({ message: 'Invalid or expired Google token' });
   }
 };

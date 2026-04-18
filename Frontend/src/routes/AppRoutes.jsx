@@ -27,9 +27,11 @@ import RecruiterDashboard from '../pages/recruiter/Dashboard';
 import RecruiterPostJob from '../pages/recruiter/PostJob';
 import RecruiterManageJobs from '../pages/recruiter/ManageJobs';
 import RecruiterApplicants from '../pages/recruiter/Applicants';
+import RecruiterManageProfile from '../pages/recruiter/ManageProfile';
 
 import AdminDashboard from '../pages/admin/Dashboard';
 import AdminUsers from '../pages/admin/Users';
+import AdminManageAccount from '../pages/admin/ManageAccount';
 
 const AppRoutes = () => {
   const { user } = useAuth();
@@ -144,6 +146,14 @@ const AppRoutes = () => {
           }
         />
         <Route
+          path="/recruiter/manage-profile"
+          element={
+            <ProtectedRoute allowedRoles={['recruiter']}>
+              <RecruiterManageProfile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/recruiter/post-job"
           element={
             <ProtectedRoute allowedRoles={['recruiter']}>
@@ -181,6 +191,14 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute allowedRoles={['admin']}>
               <AdminUsers />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/manage-account"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminManageAccount />
             </ProtectedRoute>
           }
         />

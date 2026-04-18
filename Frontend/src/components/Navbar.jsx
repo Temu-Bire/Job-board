@@ -141,7 +141,11 @@ return (
                 </button>
                 <NotificationBell />
                 <Link
-                  to={user.role === 'jobseeker' ? '/jobseeker/manage-profile' : '#'}
+                  to={
+                    user.role === 'jobseeker' ? '/jobseeker/manage-profile' : 
+                    user.role === 'recruiter' ? '/recruiter/manage-profile' : 
+                    user.role === 'admin' ? '/admin/manage-account' : '#'
+                  }
                   className="flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-blue-600"
                 >
                   <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
@@ -165,17 +169,31 @@ return (
           )}
         </div>
 
-        <button
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden text-gray-700"
-        >
-          {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
+        <div className="md:hidden flex items-center gap-4">
+          {user && (
+            <>
+              <button
+                onClick={() => setMode(mode === 'dark' ? 'light' : 'dark')}
+                className="text-gray-700 dark:text-gray-300 hover:text-blue-600"
+              >
+                {mode === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              </button>
+              <NotificationBell />
+            </>
+          )}
+
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="text-gray-700 dark:text-gray-300 hover:text-blue-600"
+          >
+            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
       </div>
     </div>
 
     {mobileMenuOpen && (
-      <div className="md:hidden bg-white border-t">
+      <div className="md:hidden bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
         <div className="px-4 py-4 space-y-3">
           {!user ? (
             <>
@@ -217,9 +235,18 @@ return (
             </>
           ) : (
             <>
-              <div className="border-b pb-3 mb-3">
-                <p className="text-sm text-gray-500 dark:text-gray-400">Signed in as</p>
-                <p className="font-semibold text-gray-800 dark:text-gray-200">{user.name}</p>
+              <div className="border-b border-gray-200 dark:border-gray-600 pb-4 mb-4 flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-600 flex items-center justify-center flex-shrink-0">
+                  {safeAvatarSrc ? (
+                    <img src={safeAvatarSrc} alt={user.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="w-6 h-6 text-gray-500 dark:text-gray-300" />
+                  )}
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Signed in as</p>
+                  <p className="font-semibold text-gray-800 dark:text-gray-200">{user.name}</p>
+                </div>
               </div>
               {user.role === 'jobseeker' && (
                 <>
@@ -243,6 +270,20 @@ return (
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Applications
+                  </Link>
+                  <Link
+                    to="/jobseeker/saved"
+                    className="block text-gray-700 dark:text-gray-300 hover:text-blue-600 font-medium py-2"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Saved Jobs
+                  </Link>
+                  <Link
+                    to="/chat"
+                    className="block text-gray-700 dark:text-gray-300 hover:text-blue-600 font-medium py-2"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Messages
                   </Link>
                   <Link
                     to="/jobseeker/manage-profile"
@@ -276,6 +317,20 @@ return (
                   >
                     Manage Jobs
                   </Link>
+                  <Link
+                    to="/chat"
+                    className="block text-gray-700 dark:text-gray-300 hover:text-blue-600 font-medium py-2"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Messages
+                  </Link>
+                  <Link
+                    to="/recruiter/manage-profile"
+                    className="block text-gray-700 dark:text-gray-300 hover:text-blue-600 font-medium py-2"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Manage Profile
+                  </Link>
                 </>
               )}
               {user.role === 'admin' && (
@@ -293,6 +348,13 @@ return (
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Users
+                  </Link>
+                  <Link
+                    to="/admin/manage-account"
+                    className="block text-gray-700 dark:text-gray-300 hover:text-blue-600 font-medium py-2"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Manage Account
                   </Link>
                 </>
               )}

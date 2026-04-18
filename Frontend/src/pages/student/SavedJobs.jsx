@@ -16,6 +16,12 @@ const SavedJobs = () => {
 
   const queryClient = useQueryClient();
 
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [showApplyModal, setShowApplyModal] = useState(false);
+  const [applying, setApplying] = useState(false);
+  const [coverLetter, setCoverLetter] = useState('');
+  const [toast, setToast] = useState(null);
+
   const { data: savedJobs = [], isLoading } = useQuery({
     queryKey: ['savedJobs'],
     queryFn: async () => {

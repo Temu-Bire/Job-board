@@ -3,6 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import User from '../models/User.js';
 import Job from '../models/Job.js';
+import Notification from '../models/Notification.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -107,6 +108,14 @@ export const approveRecruiter = async (req, res) => {
     if (user.role !== 'recruiter') return res.status(400).json({ message: 'Only recruiters can be approved' });
     user.approved = true;
     const saved = await user.save();
+
+    // Send notification to the recruiter
+    await Notification.create({
+      userId: user._id,
+      type: 'recruiter_approved',
+      message: 'Your recruiter account has been approved by an administrator! You can now post jobs.'
+    });
+
     res.json({ success: true, approved: saved.approved });
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -215,6 +224,114 @@ export const getSavedJobs = async (req, res) => {
       .populate('recruiterId', 'name profile');
 
     res.json(jobs);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+export const updateRecruiterProfile = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (req.user._id.toString() !== id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized to update this profile' });
+    }
+
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const profilePatch = {
+      companyName: req.body.companyName ?? user.profile?.companyName,
+      location: req.body.location ?? user.profile?.location,
+      phone: req.body.phone ?? user.profile?.phone,
+    };
+
+    user.profile = { ...(user.profile || {}), ...profilePatch };
+    user.company = profilePatch.companyName || user.company;
+    user.companyDescription = req.body.companyDescription ?? user.companyDescription;
+    user.website = req.body.website ?? user.website;
+    user.phone = profilePatch.phone ?? user.phone;
+
+    const saved = await user.save();
+    res.json(saved.profile);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+export const uploadRecruiterLogo = async (req, res) => {
+  try {
+    ensureUploadsDir();
+    const { id } = req.params;
+    if (req.user._id.toString() !== id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+    if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
+
+    const user = await User.findById(id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const logoUrl = `/uploads/${req.file.filename}`;
+    user.profile = { ...(user.profile || {}), logoUrl };
+    user.logoUrl = logoUrl;
+    const saved = await user.save();
+
+    res.json({ logoUrl, profile: saved.profile });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+export const createAdminUser = async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+    
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+      return res.status(400).json({ message: 'User already exists' });
+    }
+
+    const user = await User.create({
+      name,
+      email,
+      password,
+      role: 'admin',
+      approved: true,
+      blocked: false,
+    });
+
+    res.status(201).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+export const updatePassword = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { oldPassword, newPassword } = req.body;
+
+    if (req.user._id.toString() !== id.toString()) {
+      return res.status(403).json({ message: 'Not authorized to change this password' });
+    }
+
+    const user = await User.findById(id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    if (!(await user.matchPassword(oldPassword))) {
+      return res.status(401).json({ message: 'Incorrect old password' });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.json({ success: true, message: 'Password updated successfully' });
   } catch (error) {
     res.status(400).json({ message: error.message });
   }

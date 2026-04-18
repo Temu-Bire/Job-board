@@ -297,13 +297,23 @@ const JobSearch = () => {
               <p className="text-blue-600 font-semibold">{selectedJob.company}</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700 dark:text-gray-300">
+            {selectedJob.recruiterId?.profile?.companyDescription && (
+              <div className="bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 p-4 rounded-lg">
+                <h4 className="font-semibold text-gray-800 dark:text-gray-100 mb-2">About {selectedJob.company}</h4>
+                <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{selectedJob.recruiterId.profile.companyDescription}</p>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-700 p-4 rounded-lg">
               <div><strong>Location:</strong> {selectedJob.location}</div>
               <div><strong>Type:</strong> {selectedJob.type}</div>
               <div><strong>Salary:</strong> {selectedJob.salaryMin} - {selectedJob.salaryMax}</div>
               <div><strong>Openings:</strong> {selectedJob.openings || '-'}</div>
               <div><strong>Apply From:</strong> {selectedJob.applicationStart ? new Date(selectedJob.applicationStart).toLocaleDateString() : '—'}</div>
               <div><strong>Apply Until:</strong> {selectedJob.applicationEnd ? new Date(selectedJob.applicationEnd).toLocaleDateString() : '—'}</div>
+              {selectedJob.recruiterId?.profile?.phone && (
+                <div><strong>Phone Number:</strong> {selectedJob.recruiterId.profile.phone}</div>
+              )}
               {selectedJob.contactEmail && (
                 <div><strong>Contact Email:</strong> <a className="text-blue-600 hover:underline" href={`mailto:${selectedJob.contactEmail}`}>{selectedJob.contactEmail}</a></div>
               )}
