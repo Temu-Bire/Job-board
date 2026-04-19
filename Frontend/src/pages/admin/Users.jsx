@@ -6,6 +6,7 @@ import Loader from '../../components/Loader';
 import Toast from '../../components/Toast';
 import Modal from '../../components/Modal';
 import { User, UserCheck, UserX, CheckCircle, XCircle, Mail, Building } from 'lucide-react';
+import { resolveMediaUrl } from '../../utils/mediaUrl';
 
 const Users = () => {
   const queryClient = useQueryClient();
@@ -146,9 +147,9 @@ const Users = () => {
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-full overflow-hidden bg-blue-100 flex items-center justify-center">
                       {user.role === 'jobseeker' && user.avatarUrl ? (
-                        <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+                        <img src={resolveMediaUrl(user.avatarUrl)} alt={user.name} className="w-full h-full object-cover" />
                       ) : user.role === 'recruiter' && user.logoUrl ? (
-                        <img src={user.logoUrl} alt={user.name} className="w-full h-full object-cover" />
+                        <img src={resolveMediaUrl(user.logoUrl)} alt={user.name} className="w-full h-full object-cover" />
                       ) : user.role === 'jobseeker' ? (
                         <User className="w-6 h-6 text-blue-600" />
                       ) : (
@@ -261,7 +262,7 @@ const Users = () => {
                 <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Jobseeker Profile</h4>
                 <div className="flex items-center gap-4">
                   {selectedUser.avatarUrl && (
-                    <img src={selectedUser.avatarUrl} alt="avatar" className="w-16 h-16 rounded-full object-cover" />
+                    <img src={resolveMediaUrl(selectedUser.avatarUrl)} alt="avatar" className="w-16 h-16 rounded-full object-cover" />
                   )}
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
@@ -316,7 +317,7 @@ const Users = () => {
                 <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Company Information</h4>
                 <div className="flex items-start gap-4">
                   {selectedUser.logoUrl && (
-                    <img src={selectedUser.logoUrl} alt="logo" className="w-16 h-16 rounded object-cover" />
+                    <img src={resolveMediaUrl(selectedUser.logoUrl)} alt="logo" className="w-16 h-16 rounded object-cover" />
                   )}
                   <div className="space-y-2 text-sm">
                     <div>

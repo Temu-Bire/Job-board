@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
-import { io } from 'socket.io-client';
+import { connectAuthSocket } from '../../utils/socket';
 import { useAuth } from '../../context/AuthContext';
 import { messageAPI } from '../../utils/api';
 import Sidebar from '../../components/Sidebar';
@@ -47,10 +47,8 @@ const Chat = () => {
     const token = localStorage.getItem('token');
     if (!token) return undefined;
 
-    const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || (import.meta.env.PROD ? window.location.origin : 'http://127.0.0.1:5000');
-    const socket = io(SOCKET_URL, {
-      auth: { token },
-    });
+    const socket = connectAuthSocket(token);
+    if (!socket) return undefined;
     socketRef.current = socket;
 
     const handleChatMessage = (payload) => {

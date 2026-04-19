@@ -1,9 +1,10 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { userAPI } from '../../utils/api';
 import Sidebar from '../../components/Sidebar';
 import Toast from '../../components/Toast';
 import { User, Building, FileText, Link as LinkIcon, Image as ImageIcon, Edit2, X, Upload } from 'lucide-react';
+import { resolveMediaUrl } from '../../utils/mediaUrl';
 
 const ManageProfile = () => {
   const { user, updateUser } = useAuth();
@@ -19,12 +20,28 @@ const ManageProfile = () => {
     companyName: user?.company || profile.companyName || '',
     companyDescription: user?.companyDescription || profile.companyDescription || '',
     website: user?.website || profile.website || '',
-    logoUrl: user?.logoUrl || profile.logoUrl || '',
+    logoUrl: resolveMediaUrl(user?.logoUrl || profile.logoUrl || ''),
     phone: user?.phone || profile.phone || '',
     location: profile.location || '',
   });
 
   const logoInputRef = useRef(null);
+
+  useEffect(() => {
+    if (!user) return;
+    const p = user.profile || {};
+    setFormData((prev) => ({
+      ...prev,
+      name: user.name || '',
+      email: user.email || '',
+      companyName: user.company || p.companyName || '',
+      companyDescription: user.companyDescription || p.companyDescription || '',
+      website: user.website || p.website || '',
+      logoUrl: resolveMediaUrl(user.logoUrl || p.logoUrl || ''),
+      phone: user.phone || p.phone || '',
+      location: p.location || '',
+    }));
+  }, [user?._id]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -72,7 +89,8 @@ const ManageProfile = () => {
       setLoading(true);
       const res = await userAPI.uploadRecruiterLogo(user._id, file);
       const rawUrl = res.logoUrl || res?.profile?.logoUrl || '';
-      const cacheBusted = rawUrl ? `${rawUrl}${rawUrl.includes('?') ? '&' : '?'}t=${Date.now()}` : '';
+      const resolved = resolveMediaUrl(rawUrl);
+      const cacheBusted = resolved ? `${resolved}${resolved.includes('?') ? '&' : '?'}t=${Date.now()}` : '';
       setFormData((prev) => ({ ...prev, logoUrl: cacheBusted }));
       
       const newProfile = { ...(res.profile || {}), logoUrl: cacheBusted };
@@ -94,7 +112,7 @@ const ManageProfile = () => {
           <div className="flex justify-between items-end -mt-16 mb-4">
             <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white dark:border-gray-800 bg-gray-100 shadow-md">
               {formData.logoUrl ? (
-                <img src={formData.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                <img src={resolveMediaUrl(formData.logoUrl)} alt="Logo" className="w-full h-full object-cover" />
               ) : (
                 <Building className="w-16 h-16 text-gray-400 mx-auto mt-6" />
               )}
@@ -161,7 +179,7 @@ const ManageProfile = () => {
           <div className="flex items-center gap-6">
             <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700 flex items-center justify-center shadow-inner">
               {formData.logoUrl ? (
-                <img src={formData.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                <img src={resolveMediaUrl(formData.logoUrl)} alt="Logo" className="w-full h-full object-cover" />
               ) : (
                 <ImageIcon className="w-10 h-10 text-gray-400" />
               )}

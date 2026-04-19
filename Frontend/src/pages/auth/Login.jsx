@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { authAPI } from '../../utils/api';
-import { GoogleLogin } from '@react-oauth/google';
+import { hasGoogleAuth } from '../../config/env';
+import GoogleCredentialButton from '../../components/auth/GoogleCredentialButton';
 import { LogIn, Mail, Lock, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 const Login = () => {
@@ -15,6 +16,48 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+
+  const mapLoginError = useCallback((err) => {
+    if (!err) return 'Login failed. Please try again.';
+    if (typeof err === 'string') return err;
+    const msg = err.message || err.details?.message;
+    if (err.status === 401) {
+      return msg || 'Invalid email or password.';
+    }
+    if (err.status === 403) {
+      return msg || 'Access denied.';
+    }
+    return msg || 'Login failed. Please try again.';
+  }, []);
+
+  const handleGoogleCredential = useCallback(
+    async (credentialResponse) => {
+      setLoading(true);
+      setError('');
+      try {
+        const response = await authAPI.googleAuth(credentialResponse.credential);
+        login(response);
+        switch (response.role) {
+          case 'jobseeker':
+            navigate('/jobseeker/dashboard');
+            break;
+          case 'recruiter':
+            navigate('/recruiter/dashboard');
+            break;
+          case 'admin':
+            navigate('/admin/dashboard');
+            break;
+          default:
+            navigate('/');
+        }
+      } catch (err) {
+        setError(mapLoginError(err));
+      } finally {
+        setLoading(false);
+      }
+    },
+    [login, navigate, mapLoginError]
+  );
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -46,7 +89,7 @@ const Login = () => {
           navigate('/');
       }
     } catch (err) {
-      setError(err.message || 'Login failed. Please try again.');
+      setError(mapLoginError(err));
     } finally {
       setLoading(false);
     }
@@ -70,39 +113,24 @@ const Login = () => {
           </div>
         )}
 
-        <div className="mb-6 flex flex-col items-center">
-          <GoogleLogin
-            onSuccess={async (credentialResponse) => {
-              setLoading(true);
-              setError('');
-              try {
-                const response = await authAPI.googleAuth(credentialResponse.credential);
-                const authData = response;
-                login(authData);
+        {hasGoogleAuth() && (
+          <>
+            <div className="mb-6 flex flex-col items-center">
+              <GoogleCredentialButton
+                disabled={loading}
+                onCredential={handleGoogleCredential}
+                onError={() => setError('Google sign-in was cancelled or failed.')}
+                text="signin_with"
+              />
+            </div>
 
-                switch (authData.role) {
-                  case 'jobseeker': navigate('/jobseeker/dashboard'); break;
-                  case 'recruiter': navigate('/recruiter/dashboard'); break;
-                  case 'admin': navigate('/admin/dashboard'); break;
-                  default: navigate('/');
-                }
-              } catch (err) {
-                setError(err.message || 'Google Login failed. Please try again.');
-              } finally {
-                setLoading(false);
-              }
-            }}
-            onError={() => {
-              setError('Google Login Failed');
-            }}
-          />
-        </div>
-
-        <div className="flex items-center gap-4 mb-6">
-          <hr className="flex-1 border-gray-300 dark:border-gray-600" />
-          <span className="text-gray-500 dark:text-gray-400 text-sm">or sign in with email</span>
-          <hr className="flex-1 border-gray-300 dark:border-gray-600" />
-        </div>
+            <div className="flex items-center gap-4 mb-6">
+              <hr className="flex-1 border-gray-300 dark:border-gray-600" />
+              <span className="text-gray-500 dark:text-gray-400 text-sm">or sign in with email</span>
+              <hr className="flex-1 border-gray-300 dark:border-gray-600" />
+            </div>
+          </>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>

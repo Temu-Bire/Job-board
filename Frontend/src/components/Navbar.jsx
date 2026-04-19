@@ -4,6 +4,7 @@ import { Briefcase, LogOut, User, Menu, X, Moon, Sun } from 'lucide-react';
 import { useState } from 'react';
 import NotificationBell from './NotificationBell';
 import { useTheme } from '../context/ThemeContext';
+import { resolveMediaUrl } from '../utils/mediaUrl';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -30,8 +31,13 @@ const Navbar = () => {
     }
   };
 
-  const avatarSrc = user?.role === 'jobseeker' ? user?.profile?.avatarUrl : user?.role === 'recruiter' ? user?.profile?.logoUrl : '';
-  const safeAvatarSrc = avatarSrc && avatarSrc.startsWith('/uploads') ? `${avatarSrc}` : avatarSrc; // supports vite proxy for /uploads
+  const rawAvatar =
+    user?.role === 'jobseeker'
+      ? user?.profile?.avatarUrl
+      : user?.role === 'recruiter'
+        ? user?.profile?.logoUrl
+        : '';
+  const safeAvatarSrc = rawAvatar ? resolveMediaUrl(rawAvatar) : '';
 
 return (
   <nav className="bg-white dark:bg-gray-700 shadow-md sticky top-0 z-50">

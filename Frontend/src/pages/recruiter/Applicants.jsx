@@ -7,6 +7,7 @@ import Loader from '../../components/Loader';
 import Toast from '../../components/Toast';
 import Modal from '../../components/Modal';
 import { User, Mail, GraduationCap, FileText, CheckCircle, XCircle } from 'lucide-react';
+import { resolveMediaUrl } from '../../utils/mediaUrl';
 
 const Applicants = () => {
   const { jobId } = useParams(); // ✅ Extract jobId from the URL
@@ -116,8 +117,12 @@ const Applicants = () => {
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded-full overflow-hidden bg-blue-100 flex items-center justify-center">
-                        {application.student?.avatarUrl ? (
-                          <img src={application.student.avatarUrl} alt={application.student.name} className="w-full h-full object-cover" />
+                        {application.student?.avatarUrl || application.student?.profile?.avatarUrl ? (
+                          <img
+                            src={resolveMediaUrl(application.student.avatarUrl || application.student?.profile?.avatarUrl)}
+                            alt={application.student.name}
+                            className="w-full h-full object-cover"
+                          />
                         ) : (
                           <User className="w-6 h-6 text-blue-600" />
                         )}
@@ -182,8 +187,14 @@ const Applicants = () => {
           <div className="space-y-6">
             <div className="flex items-start gap-4">
               <div className="w-16 h-16 rounded-full overflow-hidden bg-blue-100 flex items-center justify-center flex-shrink-0">
-                {selectedApplicant.student?.avatarUrl ? (
-                  <img src={selectedApplicant.student.avatarUrl} alt={selectedApplicant.student.name} className="w-full h-full object-cover" />
+                {selectedApplicant.student?.avatarUrl || selectedApplicant.student?.profile?.avatarUrl ? (
+                  <img
+                    src={resolveMediaUrl(
+                      selectedApplicant.student.avatarUrl || selectedApplicant.student?.profile?.avatarUrl
+                    )}
+                    alt={selectedApplicant.student.name}
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
                   <User className="w-8 h-8 text-blue-600" />
                 )}

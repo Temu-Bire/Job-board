@@ -1,11 +1,33 @@
 import axios from 'axios';
+import { getApiBaseUrl } from '../config/env';
 
-// In dev, Vite proxy serves /api -> backend.
-// In production, set VITE_API_BASE_URL to your backend URL + /api
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+function formatAxiosError(error) {
+  const res = error.response;
+  const data = res?.data;
+  if (typeof data === 'string') {
+    const e = new Error(data);
+    e.status = res?.status;
+    return e;
+  }
+  if (data && typeof data === 'object') {
+    const msg =
+      data.message ||
+      (Array.isArray(data.errors)
+        ? data.errors.map((x) => (typeof x === 'string' ? x : x?.message || JSON.stringify(x))).join(', ')
+        : null) ||
+      res?.statusText ||
+      error.message ||
+      'Request failed';
+    const e = new Error(msg);
+    e.status = res?.status;
+    e.details = data;
+    return e;
+  }
+  return error instanceof Error ? error : new Error('Request failed');
+}
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: getApiBaseUrl(),
   headers: {
     'Content-Type': 'application/json',
   },
@@ -30,7 +52,7 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response.data,
   (error) => {
-    throw error.response?.data || error;
+    throw formatAxiosError(error);
   }
 );
 

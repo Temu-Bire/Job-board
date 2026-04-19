@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import { withResolvedMediaUser } from '../utils/mediaUrl';
 
 const AuthContext = createContext(null);
 
@@ -9,14 +10,19 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      try {
+        setUser(withResolvedMediaUser(JSON.parse(storedUser)));
+      } catch {
+        setUser(null);
+      }
     }
     setLoading(false);
   }, []);
 
   const login = (userData) => {
-    setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
+    const hydrated = withResolvedMediaUser(userData);
+    setUser(hydrated);
+    localStorage.setItem('user', JSON.stringify(hydrated));
     localStorage.setItem('token', userData.token);
   };
 
@@ -27,7 +33,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const updateUser = (userData) => {
-    const updatedUser = { ...user, ...userData };
+    const updatedUser = withResolvedMediaUser({ ...user, ...userData });
     setUser(updatedUser);
     localStorage.setItem('user', JSON.stringify(updatedUser));
   };

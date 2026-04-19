@@ -7,6 +7,7 @@ import Sidebar from '../../components/Sidebar';
 import Loader from '../../components/Loader';
 import Toast from '../../components/Toast';
 import { MessageSquare, User, Clock } from 'lucide-react';
+import { resolveMediaUrl } from '../../utils/mediaUrl';
 
 const Inbox = () => {
   const { user } = useAuth();
@@ -51,8 +52,12 @@ const Inbox = () => {
                   className="p-6 flex items-center gap-4 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
                 >
                   <div className="w-14 h-14 rounded-full overflow-hidden bg-blue-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-                    {conv.partner.avatarUrl ? (
-                      <img src={conv.partner.avatarUrl} alt={conv.partner.name} className="w-full h-full object-cover" />
+                    {conv.partner.avatarUrl || conv.partner?.profile?.avatarUrl ? (
+                      <img
+                        src={resolveMediaUrl(conv.partner.avatarUrl || conv.partner?.profile?.avatarUrl)}
+                        alt={conv.partner.name}
+                        className="w-full h-full object-cover"
+                      />
                     ) : (
                       <User className="w-7 h-7 text-blue-600" />
                     )}

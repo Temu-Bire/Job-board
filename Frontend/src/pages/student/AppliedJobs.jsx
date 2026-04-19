@@ -6,6 +6,7 @@ import { applicationAPI } from '../../utils/api';
 import Sidebar from '../../components/Sidebar';
 import Loader from '../../components/Loader';
 import { CheckCircle, XCircle, Clock, Calendar, Briefcase, User, MessageSquare } from 'lucide-react';
+import { resolveMediaUrl } from '../../utils/mediaUrl';
 
 const AppliedJobs = () => {
   const { user } = useAuth();
@@ -80,8 +81,12 @@ const AppliedJobs = () => {
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
-                          {user?.profile?.avatarUrl ? (
-                            <img src={user.profile.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+                          {user?.profile?.avatarUrl || user?.avatarUrl ? (
+                            <img
+                              src={resolveMediaUrl(user.profile?.avatarUrl || user.avatarUrl)}
+                              alt={user.name}
+                              className="w-full h-full object-cover"
+                            />
                           ) : (
                             <User className="w-5 h-5 text-gray-500" />
                           )}

@@ -1,9 +1,10 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { userAPI } from '../../utils/api';
 import Sidebar from '../../components/Sidebar';
 import Toast from '../../components/Toast';
 import { User, Mail, Phone, GraduationCap, Calendar, FileText, Plus, X, Upload, Link as LinkIcon, Image as ImageIcon } from 'lucide-react';
+import { resolveMediaUrl } from '../../utils/mediaUrl';
 
 const Profile = () => {
   const { user, updateUser } = useAuth();
@@ -17,15 +18,34 @@ const Profile = () => {
     phone: profile.phone || '',
     githubUrl: profile.githubUrl || '',
     linkedinUrl: profile.linkedinUrl || '',
-    avatarUrl: profile.avatarUrl || '',
+    avatarUrl: resolveMediaUrl(profile.avatarUrl || user?.avatarUrl || ''),
   });
   const [skills, setSkills] = useState(profile.skills || []);
   const [newSkill, setNewSkill] = useState('');
-  const [resume, setResume] = useState(profile.resumeUrl || '');
+  const [resume, setResume] = useState(resolveMediaUrl(profile.resumeUrl || user?.resumeUrl || ''));
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
   const fileInputRef = useRef(null);
   const avatarInputRef = useRef(null);
+
+  useEffect(() => {
+    if (!user) return;
+    const p = user.profile || {};
+    setFormData((prev) => ({
+      ...prev,
+      name: user.name || '',
+      email: user.email || '',
+      university: p.university || '',
+      degree: p.degree || '',
+      graduationYear: p.graduationYear || 2025,
+      phone: p.phone || '',
+      githubUrl: p.githubUrl || '',
+      linkedinUrl: p.linkedinUrl || '',
+      avatarUrl: resolveMediaUrl(p.avatarUrl || user.avatarUrl || ''),
+    }));
+    setSkills(Array.isArray(p.skills) ? p.skills : []);
+    setResume(resolveMediaUrl(p.resumeUrl || user.resumeUrl || ''));
+  }, [user?._id]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -81,7 +101,7 @@ const Profile = () => {
       setLoading(true);
       const res = await userAPI.uploadResume(user._id, file);
       const newUrl = res.resumeUrl || res?.profile?.resumeUrl || '';
-      setResume(newUrl);
+      setResume(resolveMediaUrl(newUrl));
       updateUser({ profile: res.profile });
       setToast({ message: 'Resume uploaded!', type: 'success' });
     } catch (error) {
@@ -99,7 +119,8 @@ const Profile = () => {
       setLoading(true);
       const res = await userAPI.uploadAvatar(user._id, file);
       const rawUrl = res.avatarUrl || res?.profile?.avatarUrl || '';
-      const cacheBusted = rawUrl ? `${rawUrl}${rawUrl.includes('?') ? '&' : '?'}t=${Date.now()}` : '';
+      const resolved = resolveMediaUrl(rawUrl);
+      const cacheBusted = resolved ? `${resolved}${resolved.includes('?') ? '&' : '?'}t=${Date.now()}` : '';
       setFormData((prev) => ({ ...prev, avatarUrl: cacheBusted }));
       // keep token and other fields, but refresh profile with latest server data while using cache-busted avatar locally
       const newProfile = { ...(res.profile || {}), avatarUrl: cacheBusted };
@@ -128,7 +149,7 @@ const Profile = () => {
             <div className="flex items-center gap-6 mb-8">
               <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700 flex items-center justify-center bg-">
                 {formData.avatarUrl ? (
-                  <img src={formData.avatarUrl} alt="Avatar" className="w-full h-full object-cover item-center justify-center" />
+                  <img src={resolveMediaUrl(formData.avatarUrl)} alt="Avatar" className="w-full h-full object-cover item-center justify-center" />
                 ) : (
                   <ImageIcon className="w-8 h-8 text-gray-400" />
                 )}

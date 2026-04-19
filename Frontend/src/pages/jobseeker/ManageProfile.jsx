@@ -1,9 +1,10 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { userAPI } from '../../utils/api';
 import Sidebar from '../../components/Sidebar';
 import Toast from '../../components/Toast';
 import { User, Mail, Phone, GraduationCap, Calendar, FileText, Plus, X, Upload, Link as LinkIcon, Image as ImageIcon, Edit2, Github, Linkedin, Award } from 'lucide-react';
+import { resolveMediaUrl } from '../../utils/mediaUrl';
 
 const ManageProfile = () => {
   const { user, updateUser } = useAuth();
@@ -22,15 +23,34 @@ const ManageProfile = () => {
     phone: profile.phone || '',
     githubUrl: profile.githubUrl || '',
     linkedinUrl: profile.linkedinUrl || '',
-    avatarUrl: profile.avatarUrl || '',
+    avatarUrl: resolveMediaUrl(profile.avatarUrl || user?.avatarUrl || ''),
   });
   
   const [skills, setSkills] = useState(profile.skills || []);
   const [newSkill, setNewSkill] = useState('');
-  const [resume, setResume] = useState(profile.resumeUrl || '');
+  const [resume, setResume] = useState(resolveMediaUrl(profile.resumeUrl || user?.resumeUrl || ''));
 
   const fileInputRef = useRef(null);
   const avatarInputRef = useRef(null);
+
+  useEffect(() => {
+    if (!user) return;
+    const p = user.profile || {};
+    setFormData((prev) => ({
+      ...prev,
+      name: user.name || '',
+      email: user.email || '',
+      university: p.university || '',
+      degree: p.degree || '',
+      graduationYear: p.graduationYear || 2025,
+      phone: p.phone || '',
+      githubUrl: p.githubUrl || '',
+      linkedinUrl: p.linkedinUrl || '',
+      avatarUrl: resolveMediaUrl(p.avatarUrl || user.avatarUrl || ''),
+    }));
+    setSkills(Array.isArray(p.skills) ? p.skills : []);
+    setResume(resolveMediaUrl(p.resumeUrl || user.resumeUrl || ''));
+  }, [user?._id]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -87,7 +107,7 @@ const ManageProfile = () => {
       setLoading(true);
       const res = await userAPI.uploadResume(user._id, file);
       const newUrl = res.resumeUrl || res?.profile?.resumeUrl || '';
-      setResume(newUrl);
+      setResume(resolveMediaUrl(newUrl));
       updateUser({ profile: res.profile });
       setToast({ message: 'Resume uploaded!', type: 'success' });
     } catch (error) {
@@ -105,7 +125,8 @@ const ManageProfile = () => {
       setLoading(true);
       const res = await userAPI.uploadAvatar(user._id, file);
       const rawUrl = res.avatarUrl || res?.profile?.avatarUrl || '';
-      const cacheBusted = rawUrl ? `${rawUrl}${rawUrl.includes('?') ? '&' : '?'}t=${Date.now()}` : '';
+      const resolved = resolveMediaUrl(rawUrl);
+      const cacheBusted = resolved ? `${resolved}${resolved.includes('?') ? '&' : '?'}t=${Date.now()}` : '';
       setFormData((prev) => ({ ...prev, avatarUrl: cacheBusted }));
       
       const newProfile = { ...(res.profile || {}), avatarUrl: cacheBusted };
@@ -128,7 +149,7 @@ const ManageProfile = () => {
           <div className="flex justify-between items-end -mt-16 mb-4">
             <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white dark:border-gray-800 bg-gray-100 shadow-md">
               {formData.avatarUrl ? (
-                <img src={formData.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                <img src={resolveMediaUrl(formData.avatarUrl)} alt="Avatar" className="w-full h-full object-cover" />
               ) : (
                 <User className="w-16 h-16 text-gray-400 mx-auto mt-6" />
               )}
@@ -190,7 +211,7 @@ const ManageProfile = () => {
                   <FileText className="w-6 h-6 text-gray-400" />
                   <span className="text-gray-700 dark:text-gray-200 font-medium truncate">My_Resume.pdf</span>
                 </div>
-                <a href={resume} target="_blank" rel="noreferrer" className="shrink-0 text-blue-600 hover:text-blue-700 font-semibold px-4 py-2 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors">
+                <a href={resolveMediaUrl(resume)} target="_blank" rel="noreferrer" className="shrink-0 text-blue-600 hover:text-blue-700 font-semibold px-4 py-2 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors">
                   View
                 </a>
               </div>
@@ -238,7 +259,7 @@ const ManageProfile = () => {
         <div className="flex items-center gap-6">
           <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700 flex items-center justify-center shadow-inner">
             {formData.avatarUrl ? (
-              <img src={formData.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+              <img src={resolveMediaUrl(formData.avatarUrl)} alt="Avatar" className="w-full h-full object-cover" />
             ) : (
               <ImageIcon className="w-10 h-10 text-gray-400" />
             )}

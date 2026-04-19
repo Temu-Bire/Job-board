@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { authAPI } from '../../utils/api';
-import { GoogleLogin } from '@react-oauth/google';
+import { hasGoogleAuth } from '../../config/env';
+import GoogleCredentialButton from '../../components/auth/GoogleCredentialButton';
 import { UserPlus, Mail, Lock, User, Building, GraduationCap, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 const Register = () => {
@@ -29,6 +30,33 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+
+  const mapRegisterError = useCallback((err) => {
+    if (!err) return 'Registration failed. Please try again.';
+    if (typeof err === 'string') return err;
+    return err.message || err.details?.message || 'Registration failed. Please try again.';
+  }, []);
+
+  const handleGoogleCredential = useCallback(
+    async (credentialResponse) => {
+      setLoading(true);
+      setError('');
+      try {
+        const response = await authAPI.googleAuth(credentialResponse.credential, role);
+        login(response);
+        if (response.role === 'jobseeker') {
+          navigate('/jobseeker/dashboard');
+        } else {
+          navigate('/recruiter/dashboard');
+        }
+      } catch (err) {
+        setError(mapRegisterError(err));
+      } finally {
+        setLoading(false);
+      }
+    },
+    [login, navigate, role, mapRegisterError]
+  );
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -74,7 +102,7 @@ const Register = () => {
         navigate('/recruiter/dashboard');
       }
     } catch (err) {
-      setError(err.message || 'Registration failed. Please try again.');
+      setError(mapRegisterError(err));
     } finally {
       setLoading(false);
     }
@@ -123,38 +151,24 @@ const Register = () => {
           </div>
         )}
 
-        <div className="mb-6 flex flex-col items-center">
-          <GoogleLogin
-            onSuccess={async (credentialResponse) => {
-              setLoading(true);
-              setError('');
-              try {
-                const response = await authAPI.googleAuth(credentialResponse.credential, role);
-                const authData = response;
-                login(authData);
+        {hasGoogleAuth() && (
+          <>
+            <div className="mb-6 flex flex-col items-center">
+              <GoogleCredentialButton
+                disabled={loading}
+                onCredential={handleGoogleCredential}
+                onError={() => setError('Google sign-in was cancelled or failed.')}
+                text="signup_with"
+              />
+            </div>
 
-                if (authData.role === 'jobseeker') {
-                  navigate('/jobseeker/dashboard');
-                } else {
-                  navigate('/recruiter/dashboard');
-                }
-              } catch (err) {
-                setError(err.message || 'Google Registration failed. Please try again.');
-              } finally {
-                setLoading(false);
-              }
-            }}
-            onError={() => {
-              setError('Google Registration Failed');
-            }}
-          />
-        </div>
-
-        <div className="flex items-center gap-4 mb-6">
-          <hr className="flex-1 border-gray-300 dark:border-gray-600" />
-          <span className="text-gray-500 dark:text-gray-400 text-sm">or register with email</span>
-          <hr className="flex-1 border-gray-300 dark:border-gray-600" />
-        </div>
+            <div className="flex items-center gap-4 mb-6">
+              <hr className="flex-1 border-gray-300 dark:border-gray-600" />
+              <span className="text-gray-500 dark:text-gray-400 text-sm">or register with email</span>
+              <hr className="flex-1 border-gray-300 dark:border-gray-600" />
+            </div>
+          </>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

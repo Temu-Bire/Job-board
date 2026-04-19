@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { Bell } from 'lucide-react';
-import { io } from 'socket.io-client';
+import { connectAuthSocket } from '../utils/socket';
 import { notificationAPI } from '../utils/api';
 
 const NotificationBell = () => {
@@ -33,10 +33,8 @@ const NotificationBell = () => {
     const token = localStorage.getItem('token');
     if (!token) return undefined;
 
-    const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://127.0.0.1:5000';
-    const socket = io(SOCKET_URL, {
-      auth: { token },
-    });
+    const socket = connectAuthSocket(token);
+    if (!socket) return undefined;
     socketRef.current = socket;
 
     const handleIncoming = (payload) => {
