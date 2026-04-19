@@ -165,7 +165,7 @@ export const forgotPassword = async (req, res) => {
     const rawToken = user.createPasswordResetToken();
     await user.save();
 
-    const frontendBase = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const frontendBase = process.env.FRONTEND_URL || 'https://job-board-5so6.vercel.app';
     const resetUrl = `${frontendBase}/reset-password?token=${encodeURIComponent(rawToken)}`;
 
     const subject = 'Reset your CareerConnect password';
