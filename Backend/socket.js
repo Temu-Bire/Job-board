@@ -13,7 +13,13 @@ export const initSocket = (httpServer) => {
     cors: {
       origin: corsOrigins.length > 0 ? corsOrigins : '*',
       methods: ['GET', 'POST'],
+      credentials: true,
     },
+    transports: ['websocket', 'polling'],
+    allowEIO3: true,
+    pingTimeout: 120_000,
+    pingInterval: 25_000,
+    connectTimeout: 60_000,
   });
 
   ioInstance.use((socket, next) => {

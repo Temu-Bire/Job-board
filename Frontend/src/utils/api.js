@@ -266,6 +266,16 @@ export const messageAPI = {
     const response = await api.post(`/messages/${userId}`, { message });
     return response;
   },
+
+  editMessage: async (messageId, message) => {
+    const response = await api.put(`/messages/${messageId}`, { message });
+    return response;
+  },
+
+  deleteMessage: async (messageId) => {
+    const response = await api.delete(`/messages/${messageId}`);
+    return response;
+  },
 };
 
 export const contactAPI = {

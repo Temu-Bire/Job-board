@@ -15,6 +15,7 @@ export const getConversation = async (req, res) => {
     if (!other) return res.status(404).json({ message: 'User not found' });
 
     const messages = await Message.find({
+      deletedFor: { $ne: me },
       $or: [
         { senderId: me, receiverId: userId },
         { senderId: userId, receiverId: me },
@@ -91,6 +92,7 @@ export const getConversations = async (req, res) => {
 
     // Find all messages involving the current user
     const messages = await Message.find({
+      deletedFor: { $ne: me },
       $or: [{ senderId: me }, { receiverId: me }],
     })
       .sort({ createdAt: -1 }) // Sort by newest first
@@ -136,6 +138,95 @@ export const getConversations = async (req, res) => {
     res.json(conversations);
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Edit a message sent by current user
+// @route   PUT /api/messages/:messageId
+// @access  Private
+export const editMessage = async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    const { message } = req.body;
+    const me = req.user._id.toString();
+
+    if (!message || !message.trim()) {
+      return res.status(400).json({ message: 'Message cannot be empty' });
+    }
+
+    const msg = await Message.findById(messageId);
+    if (!msg) return res.status(404).json({ message: 'Message not found' });
+
+    if (msg.senderId.toString() !== me) {
+      return res.status(403).json({ message: 'You can only edit your own messages' });
+    }
+
+    msg.message = message.trim();
+    await msg.save();
+
+    const io = getIO();
+    if (io) {
+      const payload = {
+        _id: msg._id,
+        senderId: msg.senderId,
+        receiverId: msg.receiverId,
+        message: msg.message,
+        updatedAt: msg.updatedAt,
+      };
+      io.to(`user:${msg.senderId.toString()}`).emit('chat_message_updated', payload);
+      io.to(`user:${msg.receiverId.toString()}`).emit('chat_message_updated', payload);
+    }
+
+    res.json(msg);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// @desc    Delete a message for current user
+// @route   DELETE /api/messages/:messageId
+// @access  Private
+export const deleteMessage = async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    const me = req.user._id.toString();
+
+    const msg = await Message.findById(messageId);
+    if (!msg) return res.status(404).json({ message: 'Message not found' });
+
+    const senderId = msg.senderId.toString();
+    const receiverId = msg.receiverId.toString();
+    const isParticipant = senderId === me || receiverId === me;
+    if (!isParticipant) {
+      return res.status(403).json({ message: 'You can only delete messages in your conversation' });
+    }
+
+    const alreadyDeletedForMe = msg.deletedFor?.some((id) => id.toString() === me);
+    if (!alreadyDeletedForMe) {
+      msg.deletedFor = [...(msg.deletedFor || []), req.user._id];
+      await msg.save();
+    }
+
+    // If both participants deleted this message, remove it permanently.
+    const deletedForIds = new Set((msg.deletedFor || []).map((id) => id.toString()));
+    if (deletedForIds.has(senderId) && deletedForIds.has(receiverId)) {
+      await msg.deleteOne();
+    }
+
+    const io = getIO();
+    if (io) {
+      const payload = {
+        _id: msg._id,
+        senderId: msg.senderId,
+        receiverId: msg.receiverId,
+      };
+      // Delete is per-user, so only update the current user's open chat.
+      io.to(`user:${me}`).emit('chat_message_deleted', payload);
+    }
+
+    res.json({ message: 'Message deleted for you', _id: msg._id });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
   }
 };
 

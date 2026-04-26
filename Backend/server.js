@@ -1,5 +1,5 @@
+import 'dotenv/config';
 import express from 'express';
-import dotenv from 'dotenv';
 import cors from 'cors';
 import http from 'http';
 import connectDB from './config/db.js';
@@ -16,16 +16,19 @@ import { fileURLToPath } from 'url';
 import fs from 'fs';
 import { initSocket } from './socket.js';
 import { notFound, errorHandler } from './middleware/error.middleware.js';
+import { assertProductionEnv } from './config/assertProductionEnv.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-dotenv.config();
 
 // Connect to MongoDB
 connectDB();
 
 const app = express();
+// Render / reverse proxies — needed for correct secure cookies and client IPs if you add them later
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
 const server = http.createServer(app);
 initSocket(server);
 
@@ -41,7 +44,8 @@ const corsOptions = {
     if (!origin) return callback(null, true);
     if (corsOrigins.length === 0) return callback(null, true);
     if (corsOrigins.includes(origin)) return callback(null, true);
-    return callback(new Error(`CORS blocked for origin: ${origin}`));
+    // Deny without throwing — avoids leaking CORS errors through the global error handler
+    return callback(null, false);
   },
   credentials: true,
 };
@@ -83,6 +87,8 @@ app.use(notFound);
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
+
+assertProductionEnv();
 
 server.listen(PORT, () => {
   // eslint-disable-next-line no-console

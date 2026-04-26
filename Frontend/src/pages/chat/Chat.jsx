@@ -16,6 +16,10 @@ const Chat = () => {
   const [toast, setToast] = useState(null);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
+  const [editingMessageId, setEditingMessageId] = useState(null);
+  const [editingText, setEditingText] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [deletingMessageId, setDeletingMessageId] = useState(null);
   const socketRef = useRef(null);
   const bottomRef = useRef(null);
 
@@ -60,11 +64,21 @@ const Chat = () => {
         setMessages((prev) => [...prev, payload]);
       }
     };
+    const handleChatMessageUpdated = (payload) => {
+      setMessages((prev) => prev.map((m) => (m._id === payload._id ? { ...m, ...payload } : m)));
+    };
+    const handleChatMessageDeleted = (payload) => {
+      setMessages((prev) => prev.filter((m) => m._id !== payload._id));
+    };
 
     socket.on('chat_message', handleChatMessage);
+    socket.on('chat_message_updated', handleChatMessageUpdated);
+    socket.on('chat_message_deleted', handleChatMessageDeleted);
 
     return () => {
       socket.off('chat_message', handleChatMessage);
+      socket.off('chat_message_updated', handleChatMessageUpdated);
+      socket.off('chat_message_deleted', handleChatMessageDeleted);
       socket.disconnect();
     };
   }, [userId, user?._id]);
@@ -83,6 +97,46 @@ const Chat = () => {
       setToast({ message: msg, type: 'error' });
     } finally {
       setSending(false);
+    }
+  };
+
+  const startEditing = (message) => {
+    setEditingMessageId(message._id);
+    setEditingText(message.message);
+  };
+
+  const cancelEditing = () => {
+    setEditingMessageId(null);
+    setEditingText('');
+  };
+
+  const handleSaveEdit = async (messageId) => {
+    const text = editingText.trim();
+    if (!text) return;
+    setSavingEdit(true);
+    try {
+      const updated = await messageAPI.editMessage(messageId, text);
+      setMessages((prev) => prev.map((m) => (m._id === messageId ? { ...m, ...updated } : m)));
+      cancelEditing();
+    } catch (error) {
+      const msg = error?.message || error?.data?.message || 'Failed to edit message';
+      setToast({ message: msg, type: 'error' });
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const handleDelete = async (messageId) => {
+    setDeletingMessageId(messageId);
+    try {
+      await messageAPI.deleteMessage(messageId);
+      setMessages((prev) => prev.filter((m) => m._id !== messageId));
+      if (editingMessageId === messageId) cancelEditing();
+    } catch (error) {
+      const msg = error?.message || error?.data?.message || 'Failed to delete message';
+      setToast({ message: msg, type: 'error' });
+    } finally {
+      setDeletingMessageId(null);
     }
   };
 
@@ -121,10 +175,60 @@ const Chat = () => {
                         : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-bl-none'
                     }`}
                   >
-                    <div>{m.message}</div>
+                    {editingMessageId === m._id ? (
+                      <div className="space-y-2">
+                        <input
+                          type="text"
+                          value={editingText}
+                          onChange={(e) => setEditingText(e.target.value)}
+                          className="w-full px-2 py-1 rounded border border-gray-300 text-gray-900"
+                        />
+                        <div className="flex gap-2 justify-end">
+                          <button
+                            type="button"
+                            onClick={cancelEditing}
+                            className="px-2 py-1 text-xs rounded bg-gray-500 text-white"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            disabled={savingEdit || !editingText.trim()}
+                            onClick={() => handleSaveEdit(m._id)}
+                            className="px-2 py-1 text-xs rounded bg-green-600 text-white disabled:bg-green-400"
+                          >
+                            {savingEdit ? 'Saving...' : 'Save'}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div>{m.message}</div>
+                    )}
                     <div className="mt-1 text-[10px] opacity-75">
                       {new Date(m.createdAt).toLocaleTimeString()}
+                      {m.updatedAt && m.updatedAt !== m.createdAt ? ' (edited)' : ''}
                     </div>
+                    {editingMessageId !== m._id && (
+                      <div className="mt-2 flex gap-2 justify-end">
+                        {mine && (
+                          <button
+                            type="button"
+                            onClick={() => startEditing(m)}
+                            className="px-2 py-1 text-xs rounded bg-white/25 hover:bg-white/35"
+                          >
+                            Edit
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          disabled={deletingMessageId === m._id}
+                          onClick={() => handleDelete(m._id)}
+                          className="px-2 py-1 text-xs rounded bg-red-600 hover:bg-red-700 disabled:bg-red-400"
+                        >
+                          {deletingMessageId === m._id ? 'Deleting...' : 'Delete'}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               );

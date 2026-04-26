@@ -4,6 +4,8 @@ import { fileURLToPath } from 'url';
 import User from '../models/User.js';
 import Job from '../models/Job.js';
 import Notification from '../models/Notification.js';
+import { buildStoredUploadUrl } from '../utils/mediaPath.js';
+import { isCloudinaryConfigured, uploadBufferToCloudinary } from '../utils/cloudinaryUpload.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -13,6 +15,17 @@ const ensureUploadsDir = () => {
   if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
   return uploadsDir;
 };
+
+async function persistBinaryUpload(req, folder) {
+  if (!req.file) return null;
+  if (req.file.buffer && isCloudinaryConfigured()) {
+    return uploadBufferToCloudinary(req.file.buffer, { folder });
+  }
+  if (req.file.filename) {
+    return buildStoredUploadUrl(req.file.filename);
+  }
+  return null;
+}
 
 export const getUsers = async (req, res) => {
   try {
@@ -173,7 +186,8 @@ export const uploadJobseekerAvatar = async (req, res) => {
     const user = await User.findById(id);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    const avatarUrl = `/uploads/${req.file.filename}`;
+    const avatarUrl = await persistBinaryUpload(req, 'careerconnect/avatars');
+    if (!avatarUrl) return res.status(500).json({ message: 'Could not store file' });
     user.profile = { ...(user.profile || {}), avatarUrl };
     user.avatarUrl = avatarUrl;
     const saved = await user.save();
@@ -196,7 +210,8 @@ export const uploadJobseekerResume = async (req, res) => {
     const user = await User.findById(id);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    const resumeUrl = `/uploads/${req.file.filename}`;
+    const resumeUrl = await persistBinaryUpload(req, 'careerconnect/resumes');
+    if (!resumeUrl) return res.status(500).json({ message: 'Could not store file' });
     user.profile = { ...(user.profile || {}), resumeUrl };
     user.resumeUrl = resumeUrl;
     const saved = await user.save();
@@ -272,7 +287,8 @@ export const uploadRecruiterLogo = async (req, res) => {
     const user = await User.findById(id);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    const logoUrl = `/uploads/${req.file.filename}`;
+    const logoUrl = await persistBinaryUpload(req, 'careerconnect/logos');
+    if (!logoUrl) return res.status(500).json({ message: 'Could not store file' });
     user.profile = { ...(user.profile || {}), logoUrl };
     user.logoUrl = logoUrl;
     const saved = await user.save();

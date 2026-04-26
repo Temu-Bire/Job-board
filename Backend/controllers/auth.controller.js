@@ -21,7 +21,7 @@ export const registerUser = async (req, res) => {
   try {
     const {
       name,
-      email,
+      email: rawEmail,
       password,
       role,
       university,
@@ -32,7 +32,11 @@ export const registerUser = async (req, res) => {
       website,
     } = req.body;
 
-    const userExists = await User.findOne({ email });
+    const email = String(rawEmail || '').trim().toLowerCase();
+
+    const userExists = await User.findOne({
+      $expr: { $eq: [{ $toLower: '$email' }, email] },
+    });
 
     if (userExists) {
       res.status(400);
@@ -101,37 +105,53 @@ export const registerUser = async (req, res) => {
 // @access  Public
 export const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email: rawEmail, password } = req.body;
+    const email = String(rawEmail || '').trim().toLowerCase();
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({
+      $expr: { $eq: [{ $toLower: '$email' }, email] },
+    });
 
-    if (user && (await user.matchPassword(password))) {
-      res.json({
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        approved: user.approved,
-        blocked: user.blocked,
-        university: user.university,
-        degree: user.degree,
-        graduationYear: user.graduationYear,
-        company: user.company,
-        companyDescription: user.companyDescription,
-        website: user.website,
-        avatarUrl: user.avatarUrl,
-        resumeUrl: user.resumeUrl,
-        githubUrl: user.githubUrl,
-        linkedinUrl: user.linkedinUrl,
-        profile: user.profile,
-        token: generateToken(user._id),
-      });
-    } else {
+    if (!user) {
       res.status(401);
       throw new Error('Invalid email or password');
     }
+
+    if (user.blocked && user.role !== 'admin') {
+      return res.status(403).json({
+        message: 'This account has been suspended. If you think this is a mistake, contact support.',
+      });
+    }
+
+    if (!(await user.matchPassword(password))) {
+      res.status(401);
+      throw new Error('Invalid email or password');
+    }
+
+    return res.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      approved: user.approved,
+      blocked: user.blocked,
+      university: user.university,
+      degree: user.degree,
+      graduationYear: user.graduationYear,
+      company: user.company,
+      companyDescription: user.companyDescription,
+      website: user.website,
+      avatarUrl: user.avatarUrl,
+      resumeUrl: user.resumeUrl,
+      githubUrl: user.githubUrl,
+      linkedinUrl: user.linkedinUrl,
+      profile: user.profile,
+      token: generateToken(user._id),
+    });
   } catch (error) {
-    res.status(401).json({ message: error.message });
+    if (res.headersSent) return;
+    const status = res.statusCode && res.statusCode !== 200 ? res.statusCode : 401;
+    res.status(status).json({ message: error.message || 'Login failed' });
   }
 };
 
@@ -140,7 +160,7 @@ export const loginUser = async (req, res) => {
 // @access  Private
 export const getMe = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select('-password');
+    const user = await User.findById(req.user._id).select('-password');
     res.json(user);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -241,11 +261,13 @@ export const googleAuth = async (req, res) => {
       audience: process.env.GOOGLE_CLIENT_ID,
     });
     const payload = ticket.getPayload();
-    const email = payload.email;
+    const email = String(payload.email || '').trim().toLowerCase();
     const name = payload.name;
     const avatarUrl = payload.picture;
 
-    let user = await User.findOne({ email });
+    let user = await User.findOne({
+      $expr: { $eq: [{ $toLower: '$email' }, email] },
+    });
 
     if (!user) {
       // Register logic
@@ -273,6 +295,12 @@ export const googleAuth = async (req, res) => {
         }));
         await Notification.insertMany(notifications);
       }
+    }
+
+    if (user.blocked && user.role !== 'admin') {
+      return res.status(403).json({
+        message: 'This account has been suspended. If you think this is a mistake, contact support.',
+      });
     }
 
     // Login user (whether just created or existing)

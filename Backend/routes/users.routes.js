@@ -16,8 +16,9 @@ import {
   updateRecruiterProfile,
   uploadRecruiterLogo,
   createAdminUser,
-  updatePassword
+  updatePassword,
 } from '../controllers/users.controller.js';
+import { isCloudinaryConfigured } from '../utils/cloudinaryUpload.js';
 import { protect, admin } from '../middleware/auth.middleware.js';
 import { validate, objectIdSchema } from '../middleware/validate.middleware.js';
 import { resetPasswordSchema } from '../validators/users.validators.js';
@@ -29,13 +30,16 @@ const __dirname = path.dirname(__filename);
 const uploadsDir = path.join(__dirname, '..', 'uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
-const storage = multer.diskStorage({
+const diskStorage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadsDir),
   filename: (req, file, cb) => {
     const safeExt = path.extname(file.originalname || '').toLowerCase();
     cb(null, `${Date.now()}-${Math.round(Math.random() * 1e9)}${safeExt}`);
   },
 });
+
+// Cloudinary uses in-memory buffers; disk keeps files under /uploads for local/PUBLIC_URL setups.
+const uploadStorage = isCloudinaryConfigured() ? multer.memoryStorage() : diskStorage;
 
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024; // 2MB
 const MAX_RESUME_BYTES = 5 * 1024 * 1024; // 5MB
@@ -60,9 +64,21 @@ const resumeFileFilter = (req, file, cb) => {
   cb(null, true);
 };
 
-const uploadAvatar = multer({ storage, limits: { fileSize: MAX_AVATAR_BYTES }, fileFilter: imageFileFilter });
-const uploadResume = multer({ storage, limits: { fileSize: MAX_RESUME_BYTES }, fileFilter: resumeFileFilter });
-const uploadLogo = multer({ storage, limits: { fileSize: MAX_AVATAR_BYTES }, fileFilter: imageFileFilter });
+const uploadAvatar = multer({
+  storage: uploadStorage,
+  limits: { fileSize: MAX_AVATAR_BYTES },
+  fileFilter: imageFileFilter,
+});
+const uploadResume = multer({
+  storage: uploadStorage,
+  limits: { fileSize: MAX_RESUME_BYTES },
+  fileFilter: resumeFileFilter,
+});
+const uploadLogo = multer({
+  storage: uploadStorage,
+  limits: { fileSize: MAX_AVATAR_BYTES },
+  fileFilter: imageFileFilter,
+});
 
 const router = express.Router();
 
